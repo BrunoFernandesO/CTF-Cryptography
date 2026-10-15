@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Placar · CTF de Criptografia</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root { --bg:#0E1621; --card:#16222F; --line:#26364A; --text:#E8EDF2; --muted:#9FB0C0; --amber:#F2B84B; --teal:#4CC9BE; --mono:'JetBrains Mono','Courier New',monospace; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:'IBM Plex Sans',Arial,sans-serif; }
+  .wrap { max-width:1500px; margin:0 auto; padding:40px 56px; }
+  .eyebrow { font-family:var(--mono); font-size:22px; letter-spacing:4px; text-transform:uppercase; color:var(--amber); margin:0 0 8px; }
+  h1 { font-size:64px; margin:0 0 28px; }
+  table { width:100%; border-collapse:collapse; font-size:36px; }
+  th, td { text-align:left; padding:14px 16px; border-bottom:1px solid var(--line); }
+  th { color:var(--muted); font-weight:400; font-family:var(--mono); font-size:22px; text-transform:uppercase; letter-spacing:2px; }
+  td.num, th.num { text-align:right; font-family:var(--mono); }
+  tr:nth-child(1) td { color:var(--amber); font-weight:700; }
+  .dots { font-family:var(--mono); letter-spacing:8px; color:var(--teal); }
+  .muted { color:var(--muted); font-size:22px; margin-top:20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">WorkInTech · Axion</p>
+  <h1>Placar do CTF</h1>
+  <table>
+    <thead><tr><th style="width:90px">#</th><th>Jogador</th><th>Níveis</th><th class="num">Pontos</th></tr></thead>
+    <tbody id="board"></tbody>
+  </table>
+  <p class="muted" id="empty" hidden>Ninguém entrou ainda. Abra o endereço do CTF no seu navegador.</p>
+</div>
+<script>
+async function tick() {
+  try {
+    const res = await fetch('/api/board');
+    const rows = await res.json();
+    const body = document.querySelector('#board');
+    body.textContent = '';
+    rows.slice(0, 12).forEach((r, i) => {
+      const tr = document.createElement('tr');
+      const a = document.createElement('td'); a.textContent = String(i + 1);
+      const b = document.createElement('td'); b.textContent = r.nick;
+      const c = document.createElement('td'); c.className = 'dots'; c.textContent = '●'.repeat(r.solved) + '○'.repeat(3 - r.solved);
+      const d = document.createElement('td'); d.className = 'num'; d.textContent = String(r.points);
+      tr.append(a, b, c, d); body.append(tr);
+    });
+    document.querySelector('#empty').hidden = rows.length > 0;
+  } catch (e) { /* servidor fora do ar: tenta de novo no próximo ciclo */ }
+}
+tick(); setInterval(tick, 3000);
+</script>
+</body>
+</html>
