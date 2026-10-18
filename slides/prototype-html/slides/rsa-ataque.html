@@ -1,0 +1,36 @@
+<section id="rsa-ataque" data-transition="fade" style="background:#F3F0E8;color:#14202C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;letter-spacing:4px;text-transform:uppercase;color:#9A5B00">Dia 2 · Atacando</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">Quebrando o RSA: fatorar n</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:20px">
+<p style="font-size:32px;line-height:1.4">Fatorou n = p · q? Recalcula φ(n) e acha d.</p>
+<div style="display:flex;flex-direction:column;background:#0B121B;border:1px solid #26364A;border-radius:12px;padding:32px;color:#E8EDF2">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">def fatorar(n):</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:48px;white-space:nowrap">f = 2</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:48px;white-space:nowrap">while ???:<span style="color:#F2B84B">&#160;&#160;&#160;&#160;# TODO: enquanto f NÃO divide n</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:96px;white-space:nowrap">f += 1</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:48px;white-space:nowrap">return f, n // f</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">&#160;</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">p, q = fatorar(n)</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">phi = ???<span style="color:#F2B84B">&#160;&#160;&#160;&#160;# TODO: φ(n)</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">d = pow(e, -1, phi)</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">m = pow(c, d, n)</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">print(m)</p>
+</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FBF9F4;padding:40px;border:1px solid #DDD8CB;border-radius:16px">
+<h3 style="font-size:40px;font-weight:600;color:#08706B">Por que o RSA de livro é inseguro</h3>
+<ul style="font-size:30px;line-height:1.6">
+<li>Sem padding, é determinístico</li>
+<li>É maleável: dá para mexer no cifrado</li>
+<li>Chaves pequenas são fatoráveis</li>
+</ul>
+</div>
+</div>
+<p style="font-size:34px;line-height:1.4;color:#4F5B66;width:1600px">n = 3233: instantâneo · 2048 bits (≈ 617 dígitos): inviável.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4F5B66">WorkInTech · Axion · Criptografia na Prática</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4F5B66">31</p>
+<aside>Soluções dos TODO: while n % f != 0 e phi = (p - 1) * (q - 1). É o nível 3 do CTF: o aluno cola n, e e c do puzzle dele, fatora, calcula d com pow(e, -1, phi) e decifra com pow(c, d, n); a flag é FLAG{m}. Cada aluno tem n diferente. Se o tempo estiver curto, faça a fatoração como demonstração sua: gere um n com primos de 4 a 6 dígitos, mostre a divisão sucessiva e meça o tempo à medida que n cresce, para a turma sentir por que o tamanho da chave importa. Com 2048 bits (cerca de 617 dígitos), fatorar não é viável com os métodos conhecidos.</aside>
+</section>

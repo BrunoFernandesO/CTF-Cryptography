@@ -1,0 +1,21 @@
+<section id="vigenere" data-transition="fade" style="background:#F3F0E8;color:#14202C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;letter-spacing:4px;text-transform:uppercase;color:#9A5B00">Dia 1 · Vigenère</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">Vigenère: um César em crise</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#FBF9F4;padding:48px;border:1px solid #DDD8CB;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:38px;font-weight:600;color:#08706B">Ci = (Pi + K[i mod m]) mod 26</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:36px;line-height:1.4">Texto: ATTACKATDAWN</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:36px;line-height:1.4">Chave: LEMONLEMONLE</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:36px;line-height:1.4;color:#9A5B00">Cifra: LXFOPVEFRNHR</p>
+</div>
+<div style="flex:none;width:560px;display:flex;flex-direction:column;gap:20px;background:#FBF9F4;padding:40px;border:1px solid #DDD8CB;border-radius:16px">
+<p style="font-size:32px;line-height:1.4">Palavra-chave no lugar de um k</p>
+<p style="font-size:30px;line-height:1.4;color:#4F5B66">Cada letra, um deslocamento · m = tamanho da chave (LEMON: m = 5)</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4F5B66">WorkInTech · Axion · Criptografia na Prática</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4F5B66">20</p>
+<aside>Exemplo clássico em inglês (ATTACKATDAWN com chave LEMON); nos exercícios o texto estará em português, sem acento. Mostre a primeira letra: A + L (11) = L; a segunda: T + E (4) = X. Cada coluna da chave é um César diferente, e é por isso que a frequência das letras fica espalhada. Piada: o César precisou de uma crise de identidade para virar Vigenère.</aside>
+</section>

@@ -1,0 +1,19 @@
+<section id="rsa-codigo" data-transition="fade" style="background:#0E1621;color:#E8EDF2;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;letter-spacing:4px;text-transform:uppercase;color:#F2B84B">Dia 2 · RSA em Python</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">RSA em poucas linhas</h2>
+</div>
+<div style="display:flex;flex-direction:column;background:#0B121B;border:1px solid #26364A;border-radius:12px;padding:32px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;white-space:nowrap">p, q = 61, 53</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;white-space:nowrap">n = p * q<span style="color:#9FB0C0">&#160;&#160;&#160;&#160;# 3233</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;white-space:nowrap">phi = (p - 1) * (q - 1)<span style="color:#9FB0C0">&#160;&#160;&#160;&#160;# 3120</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;white-space:nowrap">e = 17</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;white-space:nowrap">d = pow(e, -1, phi)<span style="color:#9FB0C0">&#160;&#160;&#160;&#160;# 2753: a chave privada</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;white-space:nowrap">c = pow(65, e, n)<span style="color:#9FB0C0">&#160;&#160;&#160;&#160;# cifrar o 65: dá 2790</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;white-space:nowrap">m = pow(c, d, n)<span style="color:#9FB0C0">&#160;&#160;&#160;&#160;# decifrar: volta o 65</span></p>
+</div>
+<p style="font-size:34px;line-height:1.4;color:#4CC9BE">Troque p e q por primos maiores e veja o que muda.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#9FB0C0">WorkInTech · Axion · Criptografia na Prática</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#9FB0C0">30</p>
+<aside>Cada linha corresponde a um passo do slide anterior; pow(a, b, n) faz a exponenciação modular de forma eficiente, e pow(e, -1, phi) calcula o inverso. As mensagens precisam ser números menores que n: para texto, é preciso converter cada caractere em número, o que fica como bônus. Peça que cada dupla escolha seus próprios p e q (primos pequenos) e cifre um número.</aside>
+</section>

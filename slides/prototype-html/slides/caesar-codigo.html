@@ -1,0 +1,25 @@
+<section id="caesar-codigo" data-transition="fade" style="background:#F3F0E8;color:#14202C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;letter-spacing:4px;text-transform:uppercase;color:#9A5B00">Dia 1 · César em Python</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">Sua vez: complete a função</h2>
+</div>
+<div style="display:flex;flex-direction:column;background:#0B121B;border:1px solid #26364A;border-radius:12px;padding:32px;color:#E8EDF2">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;white-space:nowrap">def cesar(texto, k):</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;padding-left:48px;white-space:nowrap">resultado = ""</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;padding-left:48px;white-space:nowrap">for c in texto.upper():</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;padding-left:96px;white-space:nowrap">if c.isalpha():</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;padding-left:144px;white-space:nowrap">n = ord(c) - ord("A")<span style="color:#9FB0C0">     &#160;&#160;&#160;&#160;# A = 0 ... Z = 25</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;padding-left:144px;white-space:nowrap">n = ???<span style="color:#F2B84B">                   &#160;&#160;&#160;&#160;# TODO: some k e use mod 26</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;padding-left:144px;white-space:nowrap">resultado += chr(n + ord("A"))</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;padding-left:96px;white-space:nowrap">else:</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;padding-left:144px;white-space:nowrap">resultado += c</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;line-height:1.5;padding-left:48px;white-space:nowrap">return resultado</p>
+</div>
+<div style="display:flex;align-items:center;gap:24px">
+<p style="font-size:32px;font-weight:600">Teste:</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;color:#08706B">cesar("OLA MUNDO", 3)  →  ROD PXQGR</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4F5B66">WorkInTech · Axion · Criptografia na Prática</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4F5B66">17</p>
+<aside>Solução da linha do TODO: n = (n + k) % 26. Deixe 5 a 8 minutos para as duplas tentarem antes de mostrar. Dica para decifrar: é cifrar com -k, então cesar(texto, -3). Aviso: acentos quebram a função (ord de “Á” sai do intervalo), então os textos do exercício vêm sem acento. No Colab, entregue a célula já com o esqueleto e o TODO.</aside>
+</section>

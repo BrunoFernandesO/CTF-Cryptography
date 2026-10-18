@@ -1,0 +1,23 @@
+<section id="vigenere-colunas" data-transition="fade" style="background:#0E1621;color:#E8EDF2;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;letter-spacing:4px;text-transform:uppercase;color:#F2B84B">Dia 2 · Vigenère em Python</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">Passo 2: a chave, coluna por coluna</h2>
+</div>
+<div style="display:flex;flex-direction:column;background:#0B121B;border:1px solid #26364A;border-radius:12px;padding:32px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;white-space:nowrap">m = 5<span style="color:#9FB0C0">&#160;&#160;&#160;&#160;# o tamanho que você descobriu</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;white-space:nowrap">chave = ""</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;white-space:nowrap">for i in range(m):</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;padding-left:48px;white-space:nowrap">coluna = texto[i::m]</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;padding-left:48px;white-space:nowrap">k = quebrar_cesar(coluna)<span style="color:#9FB0C0">&#160;&#160;&#160;&#160;# o ataque ao César de ontem!</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;padding-left:48px;white-space:nowrap">chave += ???<span style="color:#F2B84B">&#160;&#160;&#160;&#160;# TODO: transforme k na letra da chave</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;white-space:nowrap">print(chave)</p>
+</div>
+<ul style="font-size:30px;line-height:1.5">
+<li>Cada coluna é um César</li>
+<li>quebrar_cesar devolve o deslocamento k</li>
+<li>Chave repetida (SOLSOL)? A verdadeira é a menor</li>
+</ul>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#9FB0C0">WorkInTech · Axion · Criptografia na Prática</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#9FB0C0">26</p>
+<aside>Solução do TODO: chr(k + ord("A")), o inverso do que fizemos para transformar letra em número. O ponto central: se a gente sabe o tamanho m, cada coluna do texto foi cifrada com um único deslocamento, ou seja, é um César; e César a gente já quebra com quebrar_cesar. Exercício: pegue o texto do nível 2 do CTF (remova os espaços), descubra m no passo anterior, rode este loop e envie FLAG{CHAVE}. Se o resultado vier repetido, como SOLSOL, a chave verdadeira é SOL. Bônus para quem terminar: decifrar o texto inteiro com vigenere() usando a chave inversa (26 - k em cada letra).</aside>
+</section>

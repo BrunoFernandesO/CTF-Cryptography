@@ -1,0 +1,27 @@
+<section id="caesar-auto" data-transition="fade" style="background:#F3F0E8;color:#14202C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;letter-spacing:4px;text-transform:uppercase;color:#9A5B00">Dia 1 · Atacando</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">Ensine o Python a reconhecer português</h2>
+</div>
+<div style="display:flex;flex-direction:column;background:#0B121B;border:1px solid #26364A;border-radius:12px;padding:32px;color:#E8EDF2">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">def pontuacao(texto):</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:48px;white-space:nowrap">return ???<span style="color:#F2B84B">&#160;&#160;&#160;&#160;# TODO: conte os A, E e O do texto</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">&#160;</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">def quebrar_cesar(texto):</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:48px;white-space:nowrap">melhor_k = 0</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:48px;white-space:nowrap">melhor_pontos = 0</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:48px;white-space:nowrap">for k in range(26):</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:96px;white-space:nowrap">pontos = pontuacao(cesar(texto, -k))</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:96px;white-space:nowrap">if pontos &gt; melhor_pontos:</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:144px;white-space:nowrap">melhor_k = k</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:144px;white-space:nowrap">melhor_pontos = pontos</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:48px;white-space:nowrap">return melhor_k</p>
+</div>
+<div style="display:flex;align-items:center;gap:24px">
+<p style="font-size:32px;font-weight:600">Teste:</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;color:#08706B">quebrar_cesar(cesar("O CODIGO SECRETO ESTA AQUI", 7))  →  7</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4F5B66">WorkInTech · Axion · Criptografia na Prática</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4F5B66">19</p>
+<aside>Solução do TODO: texto.count("A") + texto.count("E") + texto.count("O"). A ideia: em português, A, E e O são as letras mais comuns; o deslocamento certo é o que faz o texto decifrado ter mais A, E e O. A função quebrar_cesar já vem pronta, mas vale ler com a turma: guarda o melhor k e a melhor pontuação (como num máximo em C ou Java). Esta função será reaproveitada amanhã para quebrar o Vigenère, então peça para guardarem o arquivo. Funciona bem em textos de umas dezenas de letras ou mais. Se o tempo apertar, entregue o quebrar_cesar pronto e só discuta a pontuação.</aside>
+</section>

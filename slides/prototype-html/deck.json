@@ -1,0 +1,34 @@
+{
+  "v": 4,
+  "createdOnFiles": { "v": 1, "at": "2026-10-14T23:55:00Z" },
+  "lists": "css",
+  "title": "Criptografia na Prática: Matemática e Python do Zero ao RSA",
+  "order": [
+    "cover", "combinados", "quem-sou-eu", "plano", "bilhete", "etimologia", "origem",
+    "hist-antiga", "hist-medieval", "hist-moderna", "por-que-hoje", "tipos", "kerckhoffs",
+    "caesar-ideia", "caesar-math", "python-tour", "caesar-codigo", "caesar-ataque", "caesar-auto",
+    "vigenere", "vigenere-codigo", "vigenere-ataque", "fim-dia1",
+    "abertura-dia2", "vigenere-tamanho", "vigenere-colunas", "euclides",
+    "rsa-ideia", "rsa-chaves", "rsa-codigo", "rsa-ataque", "ctf-final", "rsa-real", "close"
+  ],
+  "sections": {
+    "s1": { "description": "Abertura: quem sou eu e como vamos trabalhar.", "start": "cover" },
+    "s2": { "description": "Introdução e história da criptografia.", "start": "bilhete" },
+    "s3": { "description": "O mapa dos tipos de criptografia.", "start": "tipos" },
+    "s4": { "description": "César: ideia, matemática e Python.", "start": "caesar-ideia" },
+    "s5": { "description": "Vigenère: ideia, código e como quebrar.", "start": "vigenere" },
+    "s6": { "description": "Dia 2: quebrando o Vigenère em Python.", "start": "abertura-dia2" },
+    "s7": { "description": "Dia 2: RSA, do zero ao ataque.", "start": "euclides" },
+    "s8": { "description": "Encerramento e contatos.", "start": "close" }
+  },
+  "faces": {
+    "ibm-plex-sans": {
+      "family": "IBM Plex Sans",
+      "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap"
+    },
+    "jetbrains-mono": {
+      "family": "JetBrains Mono",
+      "href": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+<section id="vigenere-tamanho" data-transition="fade" style="background:#F3F0E8;color:#14202C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;letter-spacing:4px;text-transform:uppercase;color:#9A5B00">Dia 2 · Vigenère em Python</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">Passo 1: o tamanho da chave</h2>
+</div>
+<div style="display:flex;flex-direction:column;background:#0B121B;border:1px solid #26364A;border-radius:12px;padding:32px;color:#E8EDF2">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">from collections import Counter</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">&#160;</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">def ic(s):</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:48px;white-space:nowrap">n = len(s)</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:48px;white-space:nowrap">return sum(v * (v - 1) for v in Counter(s).values()) / (n * (n - 1))</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">&#160;</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">texto = "[cole o texto cifrado, sem espaços]"</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;white-space:nowrap">for m in range(2, 9):</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:48px;white-space:nowrap">colunas = ???<span style="color:#F2B84B">&#160;&#160;&#160;&#160;# TODO: m colunas (dica: texto[i::m])</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:48px;white-space:nowrap">media = sum(ic(c) for c in colunas) / m</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;padding-left:48px;white-space:nowrap">print(m, round(media, 4))</p>
+</div>
+<ul style="font-size:28px;line-height:1.5">
+<li>Para cada m: IC médio das colunas</li>
+<li>m certo (ou múltiplo): IC mais alto</li>
+<li>Português ≈ 0,07 · embaralhado ≈ 0,04</li>
+</ul>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4F5B66">WorkInTech · Axion · Criptografia na Prática</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4F5B66">25</p>
+<aside>Solução do TODO: [texto[i::m] for i in range(m)]. Se a turma estranhar a list comprehension, escreva o equivalente em loop: colunas = []; for i in range(m): colunas.append(texto[i::m]). A função ic() já vem pronta (é o índice de coincidência: a chance de duas letras sorteadas do texto serem iguais); o foco dos alunos é separar as colunas e olhar o resultado. Em português o IC fica perto de 0,07; em texto embaralhado, perto de 0,04 (1/26). Múltiplos do tamanho real da chave também dão IC alto: se a chave tem 3 letras, m = 6 também aparece bem; escolha o menor valor que se destaca. Se o tempo apertar, entregue também o loop pronto e só interprete a tabela.</aside>
+</section>

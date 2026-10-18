@@ -1,0 +1,29 @@
+<section id="rsa-chaves" data-transition="fade" style="background:#F3F0E8;color:#14202C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;letter-spacing:4px;text-transform:uppercase;color:#9A5B00">Dia 2 · RSA</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">RSA: fabricando as chaves</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#FBF9F4;padding:48px;border:1px solid #DDD8CB;border-radius:16px">
+<ol style="font-size:32px;line-height:1.6">
+<li>Escolha dois primos grandes, p e q</li>
+<li>n = p · q</li>
+<li>φ(n) = (p − 1)(q − 1)</li>
+<li>Escolha e com mdc(e, φ(n)) = 1</li>
+<li>d = inverso de e módulo φ(n)</li>
+</ol>
+<p style="font-size:30px;line-height:1.4;color:#4F5B66">Chave pública: (n, e). Chave privada: (n, d).</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#14202C;color:#E8EDF2;padding:48px;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;letter-spacing:2px;text-transform:uppercase;color:#F2B84B">Exemplo pequeno</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:32px;line-height:1.5;color:#4CC9BE">p = 61, q = 53</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:32px;line-height:1.5;color:#4CC9BE">n = 3233, φ(n) = 3120</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:32px;line-height:1.5;color:#4CC9BE">e = 17, d = 2753</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:32px;line-height:1.5">m = 65 → c = 65^17 mod 3233 = 2790</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:32px;line-height:1.5">2790^2753 mod 3233 = 65</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4F5B66">WorkInTech · Axion · Criptografia na Prática</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4F5B66">29</p>
+<aside>Faça o exemplo à mão com a turma, com calculadora: 61 × 53 = 3233; 60 × 52 = 3120; 17 × 2753 deixa resto 1 na divisão por 3120. Cifre o 65 e mostre que decifrar traz o 65 de volta. A parte pesada das contas (as potências) fica para o Python no próximo slide.</aside>
+</section>

@@ -1,0 +1,26 @@
+<section id="vigenere-codigo" data-transition="fade" style="background:#0E1621;color:#E8EDF2;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;letter-spacing:4px;text-transform:uppercase;color:#F2B84B">Dia 1 · Vigenère em Python</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">Mesma ideia, uma lista de chaves</h2>
+</div>
+<div style="display:flex;flex-direction:column;background:#0B121B;border:1px solid #26364A;border-radius:12px;padding:32px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;white-space:nowrap">def vigenere(texto, chave):</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;padding-left:48px;white-space:nowrap">resultado = ""</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;padding-left:48px;white-space:nowrap">i = 0<span style="color:#9FB0C0">                                  &#160;&#160;&#160;&#160;# posição na chave</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;padding-left:48px;white-space:nowrap">for c in texto.upper():</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;padding-left:96px;white-space:nowrap">if c.isalpha():</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;padding-left:144px;white-space:nowrap">k = ord(chave[i % len(chave)]) - ord("A")</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;padding-left:144px;white-space:nowrap">resultado += ???<span style="color:#F2B84B">                 &#160;&#160;&#160;&#160;# TODO: reaproveite o cesar()</span></p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;padding-left:144px;white-space:nowrap">i += 1</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;padding-left:96px;white-space:nowrap">else:</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;padding-left:144px;white-space:nowrap">resultado += c</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;line-height:1.5;padding-left:48px;white-space:nowrap">return resultado</p>
+</div>
+<div style="display:flex;align-items:center;gap:24px">
+<p style="font-size:32px;font-weight:600">Teste:</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;color:#4CC9BE">vigenere("ATTACKATDAWN", "LEMON")  →  LXFOPVEFRNHR</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#9FB0C0">WorkInTech · Axion · Criptografia na Prática</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#9FB0C0">21</p>
+<aside>Solução do TODO: resultado += cesar(c, k). A graça é reaproveitar a função do César letra por letra: o Vigenère é um César cujo k muda a cada letra. O índice i só avança nas letras, para espaços e pontuação não consumirem a chave. A chave deve estar em maiúsculas e sem acento.</aside>
+</section>
