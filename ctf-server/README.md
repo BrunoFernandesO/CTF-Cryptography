@@ -1,43 +1,70 @@
-# CTF de Criptografia · WorkInTech (Axion)
+# CTF de Criptografia · WorkInTech (Axion) · V2
 
-Servidor Flask + SQLite para rodar no **seu notebook**, na rede do laboratório. Cada aluno escolhe um apelido e recebe puzzles próprios (derivados de HMAC com um segredo do servidor), escreve o código do ataque e envia a flag. O placar atualiza sozinho e há uma página própria para o telão.
+Servidor do desafio final da oficina **Criptografia na Prática: Matemática e Python do Zero ao RSA**, ministrada por Bruno Fernandes Ortega no WorkInTech 2026 (Axion, UniCesumar). Cada aluno escolhe um apelido, recebe três puzzles próprios (César, Vigenère e RSA pequeno), quebra cada um com o código que escreveu na oficina e envia a flag. O placar do telão atualiza sozinho.
 
-## 1. Instalar e rodar
+## Como funciona
+
+```text
+ Alunos ("/")  ──HTTP──►  Flask (app.py)  ──►  SQLite (ctf.db)
+                           ├─ puzzles.py: gera os puzzles a partir de HMAC(segredo, apelido:nível:tentativa)
+                           ├─ atribui a cada aluno uma resposta que ninguém mais tem (UNIQUE no banco)
+                           └─ confere as flags só no servidor
+ Telão ("/placar") ◄── /api/placar a cada 3 s: ranking, primeiro a resolver, últimos acertos
+```
+
+| Nível | Cifra | O aluno precisa | Respostas diferentes |
+| --- | --- | --- | --- |
+| 1 · 100 pts | César, k de 1 a 25 | força bruta (25 chaves) e ler a senha | 1.600 senhas (40 termos × 40 animais) |
+| 2 · 200 pts | Vigenère, chave de 3 a 7 letras | índice de coincidência para achar m, depois um César por coluna | 131 chaves, todas testadas contra o ataque |
+| 3 · 300 pts | RSA com p, q entre 200 e 1000 | fatorar n, calcular φ(n), d e m | praticamente ilimitadas |
+
+Garantias:
+
+- **Nenhuma resposta repetida.** Na primeira vez que um aluno vê um nível, o servidor procura uma tentativa cuja flag ninguém mais tenha e grava essa escolha (`assignments`, com `UNIQUE (level, flag_key)`). No nível 2, isso vale até 131 jogadores; a partir daí as chaves voltam a se repetir.
+- **Sem chute em massa.** Cada erro custa uma espera que cresce: 3 s nos primeiros 5 erros, 30 s do 6º ao 10º e 120 s depois disso (por jogador e por nível).
+- **Flags tolerantes ao formato.** Maiúsculas ou minúsculas, espaço, hífen ou sublinhado: `flag{chave urso}` vale como `FLAG{CHAVE-URSO}`.
+- **Testado:** 200 jogadores simulados, ataques dos slides resolvendo 180 de 180 puzzles, banco da V1 atualizado sem perder dados.
+
+## Rodar localmente
 
 ```bash
 cd ctf-server
 python3 -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python app.py                                          # sobe na porta 5000
+python app.py                                          # http://localhost:5000 e /placar
 ```
 
-Na primeira execução é criado o arquivo `secret.key` (o segredo dos puzzles). **Não apague** entre os dois dias: ele garante que o puzzle de cada apelido continue o mesmo. Para trocar o evento, apague `secret.key` e rode `flask --app app zerar`.
+Na primeira execução é criado `secret.key` (o segredo dos puzzles). **Não apague** entre os dois dias da oficina. Ele e o `ctf.db` nunca vão para o Git (veja `.gitignore`).
 
-## 2. Deixar os computadores do laboratório acessarem
+## Publicar no PythonAnywhere
 
-1. Descubra o IP do notebook na rede: `ip a` (Linux), `ipconfig` (Windows) ou `ifconfig` (macOS). Algo como `192.168.x.x` ou `10.x.x.x`.
-2. Libere a porta 5000 no firewall do notebook (Windows: permitir o Python na rede privada quando perguntado).
-3. Nos alunos, o endereço será `http://SEU_IP:5000`. Gere o QR code desse endereço para o slide do CTF.
-4. **Teste antes do dia 26**, no laboratório, com o celular e com um computador de lá. Algumas redes de laboratório e de universidade isolam os clientes entre si ("client isolation"), e aí nada disto funciona. Se acontecer:
-   - peça à TI para liberar a comunicação entre o seu notebook e a rede do laboratório; ou
-   - plano B: um túnel público temporário, por exemplo `cloudflared tunnel --url http://localhost:5000` (gera um endereço `https://….trycloudflare.com`), que só depende de internet, e o laboratório tem.
+Aplicação web com configuração manual, Python 3.10 ou mais novo, virtualenv com `pip install -r requirements.txt` e o arquivo WSGI:
 
-## 3. Durante o evento
+```python
+import sys
+path = "/home/<usuario>/ctf-server"
+if path not in sys.path:
+    sys.path.insert(0, path)
+from app import app as application
+```
 
-- Telão: abra `http://localhost:5000/placar` (tela cheia, atualiza a cada 3 s).
-- Aluno perdeu o cookie e não consegue voltar ao apelido? `flask --app app liberar NOME` (mantém os pontos; o próximo login com esse nome assume a conta).
-- Apelido repetido: o servidor recusa, o que evita duas pessoas com o mesmo puzzle.
-- Errou a flag: espera de 3 s antes da próxima tentativa (aplicada no servidor, por jogador e por nível).
-- Antes de cada turma: `flask --app app zerar`.
+## Comandos do organizador
 
-## 4. Pontuação
+```bash
+flask --app app zerar               # apaga jogadores, pontos e puzzles (antes de cada turma)
+flask --app app liberar APELIDO     # aluno perdeu o login: o próximo acesso com esse nome assume a conta
+flask --app app respostas APELIDO   # mostra a resposta de um aluno, para ajudar quem travou
+```
 
-Nível 1 (César) 100 · Nível 2 (Vigenère) 200 · Nível 3 (RSA pequeno) 300. Desempate pelo horário do último acerto.
+## Estrutura
 
-## 5. Referência
+```text
+ctf-server/
+├── app.py              rotas, banco, atribuição de respostas, comandos
+├── puzzles.py          listas de palavras e chaves, geração dos puzzles, comparação de flags
+├── templates/          index.html (alunos) e placar.html (telão)
+├── static/             ctf.css (tokens da identidade Axion), trilha.js, logos e fundo
+└── requirements.txt    Flask
+```
 
-`referencia/ataques.py` tem as soluções completas (o código que os alunos montam nos slides). Foi testado contra 400 apelidos diferentes, nos três níveis, sem falhas.
-
-## Segurança
-
-As flags são conferidas só no servidor e nunca vão para o navegador. O segredo fica em `secret.key`. É um servidor de sala de aula: não o exponha na internet além do tempo do evento.
+Identidade visual: sistema de design Axion (fundo roxo, acento lima, Lexend e JetBrains Mono). Logos da Axion e do WorkInTech pertencem à Axion.

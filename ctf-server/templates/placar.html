@@ -3,53 +3,172 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Placar · CTF de Criptografia</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<title>Placar · CTF de Criptografia · WorkInTech</title>
+<meta name="description" content="Placar ao vivo do CTF da oficina Criptografia na Prática (WorkInTech · Axion).">
+<meta name="theme-color" content="#130127">
+<link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- unslop-ignore: T02 Lexend e JetBrains Mono são as fontes da marca Axion (sistema de design / axion-ui) -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="{{ url_for('static', filename='ctf.css') }}">
 <style>
-  :root { --bg:#0E1621; --card:#16222F; --line:#26364A; --text:#E8EDF2; --muted:#9FB0C0; --amber:#F2B84B; --teal:#4CC9BE; --mono:'JetBrains Mono','Courier New',monospace; }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font-family:'IBM Plex Sans',Arial,sans-serif; }
-  .wrap { max-width:1500px; margin:0 auto; padding:40px 56px; }
-  .eyebrow { font-family:var(--mono); font-size:22px; letter-spacing:4px; text-transform:uppercase; color:var(--amber); margin:0 0 8px; }
-  h1 { font-size:64px; margin:0 0 28px; }
-  table { width:100%; border-collapse:collapse; font-size:36px; }
-  th, td { text-align:left; padding:14px 16px; border-bottom:1px solid var(--line); }
-  th { color:var(--muted); font-weight:400; font-family:var(--mono); font-size:22px; text-transform:uppercase; letter-spacing:2px; }
-  td.num, th.num { text-align:right; font-family:var(--mono); }
-  tr:nth-child(1) td { color:var(--amber); font-weight:700; }
-  .dots { font-family:var(--mono); letter-spacing:8px; color:var(--teal); }
-  .muted { color:var(--muted); font-size:22px; margin-top:20px; }
+  /* Feito para o telão: tudo em rem, e o rem cresce com a tela (24px numa tela de 1920). */
+  html { font-size: clamp(14px, 1.25vw, 24px); }
+  :root { --page-max: none; }
+  body { font-size: 1rem; }
+  .brandbar .by-axion img { height: 1.7rem; }
+  .brandbar .by-axion span { font-size: .8rem; }
+  .brandbar .wit { height: 2.1rem; }
+
+  .board { padding: 0 clamp(16px, 3vw, 64px) 2rem; }
+  .top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem 2rem; margin-bottom: 1.2rem; }
+  .top h1 { font-size: 3.2rem; }
+  .join { text-align: right; }
+  .join p { color: var(--ink-300); font-size: .9rem; }
+  .join .host { font-family: var(--mono); font-size: 1.35rem; font-weight: 600; color: var(--lime-400); overflow-wrap: anywhere; }
+
+  .grid { display: grid; gap: 1.6rem 2.4rem; }
+  @media (min-width: 900px) { .grid { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); } }
+
+  .rank { list-style: none; padding: 0; }
+  .rank li { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto 4.2rem; align-items: center; gap: 1.2rem; padding: .32rem .8rem; border-top: 1px solid var(--line-600); }
+  .rank li:first-child { border-top: 0; }
+  .rank .pos { color: var(--ink-300); font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+  .rank .nick { font-size: 1.25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rank .pts { font-family: var(--mono); font-size: 1.25rem; font-weight: 600; text-align: right; }
+  .rank li.lead { background: var(--surface-700); border-radius: var(--r-data); border-top-color: transparent; }
+  .rank li.lead + li { border-top-color: transparent; }
+  .rank li.lead .nick { font-weight: 700; }
+  .rank .empty { display: block; color: var(--ink-300); font-size: 1.1rem; padding: 1rem 0; }
+
+  .panel { background: var(--surface-700); border: 1px solid var(--line-600); border-radius: var(--r-panel); padding: 1.1rem 1.3rem; }
+  .panel + .panel { margin-top: 1.2rem; }
+  .panel h2 { font-size: 1.05rem; font-weight: 600; margin-bottom: .6rem; }
+  .firsts, .feed { list-style: none; padding: 0; }
+  .firsts li { display: grid; grid-template-columns: 6.4rem minmax(0, 1fr) auto; gap: .8rem; align-items: baseline; padding: .35rem 0; }
+  .firsts .lvl { color: var(--ink-300); }
+  .firsts .who { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .firsts .who.none { font-weight: 400; color: var(--ink-500); }
+  .firsts .t, .feed .t { font-family: var(--mono); color: var(--ink-300); font-size: .85rem; }
+  .feed li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .8rem; align-items: baseline; padding: .35rem .5rem; margin: 0 -.5rem; border-radius: 8px; }
+  .feed .what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .feed .what b { font-weight: 600; }
+  .feed .what span { color: var(--ink-300); }
+  .feed .empty { display: block; color: var(--ink-300); }
+  .feed li.new { animation: chegou 2.4s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  @keyframes chegou { from { background: rgba(193, 255, 114, 0.22); } to { background: transparent; } }
+
+  .foot { margin-top: 1.4rem; color: var(--ink-300); font-size: .9rem; }
+  .foot b { color: var(--ink-50); font-weight: 600; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <p class="eyebrow">WorkInTech · Axion</p>
-  <h1>Placar do CTF</h1>
-  <table>
-    <thead><tr><th style="width:90px">#</th><th>Jogador</th><th>Níveis</th><th class="num">Pontos</th></tr></thead>
-    <tbody id="board"></tbody>
-  </table>
-  <p class="muted" id="empty" hidden>Ninguém entrou ainda. Abra o endereço do CTF no seu navegador.</p>
-</div>
+<header class="brandbar">
+  <span class="by-axion"><span>by</span><img src="{{ url_for('static', filename='axion-logo.svg') }}" alt="Axion" width="94" height="26"></span>
+  <img class="wit" src="{{ url_for('static', filename='wit-mark.png') }}" alt="WorkInTech" width="85" height="32">
+</header>
+
+<p class="offline" id="offline" role="alert" hidden>Sem conexão com o servidor. O placar volta sozinho quando a conexão voltar.</p>
+
+<main class="board">
+  <div class="top">
+    <h1 class="two-voice">Placar do <b>CTF</b></h1>
+    <div class="join">
+      <p>Ainda não entrou? Acesse</p>
+      <p class="host" id="host"></p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <section aria-label="Classificação">
+      <ol class="rank" id="rank"></ol>
+      <p class="foot" id="foot"></p>
+    </section>
+    <div>
+      <section class="panel" aria-labelledby="firsts-title">
+        <h2 id="firsts-title">Primeiro a resolver</h2>
+        <ul class="firsts" id="firsts"></ul>
+      </section>
+      <section class="panel" aria-labelledby="feed-title">
+        <h2 id="feed-title">Últimos acertos</h2>
+        <ul class="feed" id="feed" aria-live="polite"></ul>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script src="{{ url_for('static', filename='trilha.js') }}"></script>
 <script>
+const $ = s => document.querySelector(s);
+const seen = new Set();
+let first = true;
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+const hora = ts => new Date(ts * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+$('#host').textContent = location.host;
+
+function paint(d) {
+  const rank = $('#rank');
+  rank.textContent = '';
+  if (d.rows.length === 0) {
+    rank.append(el('li', 'empty', 'Ninguém entrou ainda. Abra o endereço ao lado e escolha um apelido.'));
+  }
+  d.rows.slice(0, 10).forEach((r, i) => {
+    const li = el('li', i === 0 && r.points > 0 ? 'lead' : '');
+    li.append(el('span', 'pos', (i + 1) + 'º'), el('span', 'nick', r.nick), trilhaSVG(r.levels, { gap: 58, r: 10 }), el('span', 'pts', String(r.points)));
+    rank.append(li);
+  });
+
+  const firsts = $('#firsts');
+  firsts.textContent = '';
+  d.firsts.forEach(f => {
+    const li = el('li');
+    li.append(el('span', 'lvl', f.name), el('span', 'who' + (f.nick ? '' : ' none'), f.nick || 'ainda ninguém'), el('span', 't', f.ts ? hora(f.ts) : ''));
+    firsts.append(li);
+  });
+
+  const feed = $('#feed');
+  feed.textContent = '';
+  if (d.feed.length === 0) feed.append(el('li', 'empty', 'Os acertos aparecem aqui assim que acontecem.'));
+  d.feed.forEach(s => {
+    const key = s.nick + ':' + s.level;
+    const li = el('li', !first && !seen.has(key) ? 'new' : '');
+    seen.add(key);
+    const what = el('span', 'what');
+    what.append(el('b', null, s.nick), el('span', null, ' resolveu ' + s.name));
+    li.append(what, el('span', 't', hora(s.ts)));
+    feed.append(li);
+  });
+  first = false;
+
+  const foot = $('#foot');
+  foot.textContent = '';
+  foot.append(el('b', null, String(d.players)), document.createTextNode(d.players === 1 ? ' jogador. Resolveram: ' : ' jogadores. Resolveram: '));
+  d.counts.forEach((c, i) => {
+    foot.append(document.createTextNode((i ? (i === d.counts.length - 1 ? ' e ' : ', ') : '') + c.name + ' '), el('b', null, String(c.solved)));
+  });
+  foot.append(document.createTextNode('.'));
+}
+
 async function tick() {
   try {
-    const res = await fetch('/api/board');
-    const rows = await res.json();
-    const body = document.querySelector('#board');
-    body.textContent = '';
-    rows.slice(0, 12).forEach((r, i) => {
-      const tr = document.createElement('tr');
-      const a = document.createElement('td'); a.textContent = String(i + 1);
-      const b = document.createElement('td'); b.textContent = r.nick;
-      const c = document.createElement('td'); c.className = 'dots'; c.textContent = '●'.repeat(r.solved) + '○'.repeat(3 - r.solved);
-      const d = document.createElement('td'); d.className = 'num'; d.textContent = String(r.points);
-      tr.append(a, b, c, d); body.append(tr);
-    });
-    document.querySelector('#empty').hidden = rows.length > 0;
-  } catch (e) { /* servidor fora do ar: tenta de novo no próximo ciclo */ }
+    const res = await fetch('/api/placar');
+    const d = await res.json();
+    $('#offline').hidden = true;
+    paint(d);
+  } catch (e) {
+    $('#offline').hidden = false;
+  }
 }
-tick(); setInterval(tick, 3000);
+tick();
+setInterval(tick, 3000);
 </script>
 </body>
 </html>

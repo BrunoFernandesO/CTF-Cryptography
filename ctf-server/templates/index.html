@@ -4,185 +4,341 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CTF de Criptografia · WorkInTech</title>
+<meta name="description" content="CTF da oficina Criptografia na Prática (WorkInTech · Axion): quebre César, Vigenère e um RSA pequeno com o seu próprio código.">
+<meta name="theme-color" content="#130127">
+<link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- unslop-ignore: T02 Lexend e JetBrains Mono são as fontes da marca Axion (sistema de design / axion-ui) -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="{{ url_for('static', filename='ctf.css') }}">
 <style>
-  :root { --bg:#0E1621; --card:#16222F; --line:#26364A; --text:#E8EDF2; --muted:#9FB0C0; --amber:#F2B84B; --teal:#4CC9BE; --bad:#FF8A7A; --mono:'JetBrains Mono','Courier New',monospace; }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font-family:'IBM Plex Sans',Arial,sans-serif; line-height:1.5; }
-  .wrap { max-width:1120px; margin:0 auto; padding:32px 20px 64px; }
-  .eyebrow { font-family:var(--mono); font-size:13px; letter-spacing:3px; text-transform:uppercase; color:var(--amber); margin:0 0 8px; }
-  h1 { font-size:clamp(30px,5vw,48px); line-height:1.1; margin:0 0 12px; }
-  h2 { font-size:22px; margin:0 0 8px; }
-  p { margin:0 0 12px; }
-  .muted { color:var(--muted); }
-  header { display:flex; flex-wrap:wrap; gap:16px; justify-content:space-between; align-items:flex-end; margin-bottom:32px; }
-  .player-chip { display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:8px 8px 8px 18px; font-family:var(--mono); font-size:14px; }
-  .player-chip b { color:var(--teal); }
-  .layout { display:grid; gap:24px; grid-template-columns:1fr; }
-  @media (min-width:920px) { .layout { grid-template-columns:1fr 340px; align-items:start; } }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:24px; }
-  .stack { display:flex; flex-direction:column; gap:24px; }
-  .level-head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; }
-  .tag { font-family:var(--mono); font-size:13px; letter-spacing:1px; border:1px solid var(--line); border-radius:999px; padding:2px 12px; color:var(--muted); }
-  .tag.done { color:#0E1621; background:var(--teal); border-color:var(--teal); font-weight:600; }
-  pre.puzzle { font-family:var(--mono); font-size:15px; line-height:1.6; background:#0B121B; border:1px solid var(--line); border-radius:10px; padding:16px; margin:12px 0; white-space:pre-wrap; word-break:break-word; color:var(--teal); }
-  .row { display:flex; gap:8px; flex-wrap:wrap; }
-  input[type=text] { flex:1 1 220px; min-width:0; background:#0B121B; color:var(--text); border:1px solid var(--line); border-radius:10px; padding:12px 14px; font-family:var(--mono); font-size:15px; }
-  input[type=text]:focus-visible, button:focus-visible, summary:focus-visible { outline:2px solid var(--amber); outline-offset:2px; }
-  button { font-family:inherit; font-size:15px; font-weight:600; cursor:pointer; border-radius:10px; border:1px solid transparent; padding:12px 18px; background:var(--amber); color:#0E1621; }
-  button.ghost { background:transparent; color:var(--text); border-color:var(--line); padding:8px 14px; font-weight:400; }
-  button:disabled { opacity:.55; cursor:not-allowed; }
-  .feedback { min-height:24px; margin:10px 0 0; font-size:15px; }
-  .feedback.ok { color:var(--teal); } .feedback.bad { color:var(--bad); }
-  details { margin-top:12px; color:var(--muted); } summary { cursor:pointer; }
-  table { width:100%; border-collapse:collapse; font-size:15px; }
-  th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); }
-  th { color:var(--muted); font-weight:400; font-family:var(--mono); font-size:13px; text-transform:uppercase; letter-spacing:1px; }
-  td.num { text-align:right; font-family:var(--mono); }
-  tr.me td { color:var(--teal); font-weight:600; }
-  label { display:block; font-size:14px; color:var(--muted); margin-bottom:6px; }
-  [hidden] { display:none !important; }
+  :root { --page-max: 1240px; }
+  .page { max-width: var(--page-max); margin: 0 auto; padding: 8px clamp(16px, 4vw, 56px) 64px; }
+  .intro { max-width: 46rem; margin: 12px 0 32px; }
+  .intro h1 { font-size: clamp(36px, 6vw, 64px); margin-bottom: 12px; }
+  .intro p { color: var(--ink-300); font-size: 17px; }
+
+  /* Entrar */
+  .entry { max-width: 34rem; background: var(--surface-700); border: 1px solid var(--line-600); border-radius: var(--r-panel); padding: 28px; }
+  .entry h2 { font-size: 24px; margin-bottom: 8px; }
+  .entry > p { color: var(--ink-300); margin-bottom: 20px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row input { flex: 1 1 14rem; width: auto; }
+
+  /* Jogo */
+  .layout { display: grid; gap: 28px; align-items: start; }
+  @media (min-width: 1000px) { .layout { grid-template-columns: minmax(0, 1fr) 320px; } }
+
+  .player { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-bottom: 20px; }
+  .player .who { font-size: 15px; color: var(--ink-300); }
+  .player .who strong { color: var(--ink-50); font-weight: 600; }
+  .player .pts { font-family: var(--mono); font-size: 18px; font-weight: 600; }
+  .player .btn { margin-left: auto; min-height: 40px; padding: 8px 18px; }
+
+  .levels { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 20px; }
+  .level { background: var(--surface-700); border: 1px solid var(--line-600); border-radius: var(--r-panel); padding: 28px; }
+  /* unslop-ignore: K04 contorno lima à esquerda e embaixo é o card do template oficial Axion; aqui marca só o estado "resolvido" */
+  .level.solved { border: 0; border-left: 4px solid var(--lime-400); border-bottom: 4px solid var(--lime-400); border-radius: var(--r-solved); }
+  .level-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+  .level-head h2 { font-size: 24px; font-weight: 600; }
+  .level-head h2 .n { color: var(--ink-300); font-weight: 400; margin-right: 6px; }
+  .level-head .value { font-family: var(--mono); color: var(--ink-300); white-space: nowrap; }
+  .level.solved .level-head .value { color: var(--lime-400); }
+  .desc { color: var(--ink-300); max-width: 62ch; margin-bottom: 18px; }
+
+  .data { display: grid; gap: 10px; margin-bottom: 10px; }
+  .data.pairs { grid-template-columns: max-content minmax(0, 1fr); gap: 4px 16px; background: var(--surface-950); border: 1px solid var(--line-600); border-radius: var(--r-data); padding: 12px 14px; }
+  .data.pairs .data-label { margin: 0; font-size: 14px; align-self: baseline; }
+  .data.pairs .data-value { align-self: baseline; }
+  .data-item { background: var(--surface-950); border: 1px solid var(--line-600); border-radius: var(--r-data); padding: 12px 14px; }
+  .data-label { font-size: 13px; color: var(--ink-300); margin-bottom: 4px; }
+  .data-value { margin: 0; font-family: var(--mono); font-size: 15px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink-50); }
+  .data-actions { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .data-actions .btn { min-height: 38px; padding: 6px 16px; font-size: 14px; }
+
+  .done { font-weight: 600; color: var(--lime-400); }
+  details { margin-top: 16px; color: var(--ink-300); }
+  summary { cursor: pointer; width: fit-content; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--placeholder-500); }
+  details p { margin-top: 8px; max-width: 62ch; }
+
+  /* Placar lateral */
+  .side { background: var(--surface-700); border: 1px solid var(--line-600); border-radius: var(--r-panel); padding: 24px; }
+  @media (min-width: 1000px) { .side { position: sticky; top: 20px; } }
+  .side h2 { font-size: 20px; margin-bottom: 4px; }
+  .side .sub { font-size: 14px; color: var(--ink-300); margin-bottom: 14px; }
+  .rank { list-style: none; padding: 0; }
+  .rank li { display: grid; grid-template-columns: 2.2em minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line-600); font-size: 15px; }
+  .rank .pos { color: var(--ink-300); font-variant-numeric: tabular-nums; }
+  .rank .nick { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rank .p { font-family: var(--mono); text-align: right; min-width: 3ch; }
+  .rank li.me .nick { color: var(--lime-400); font-weight: 600; }
+  .rank .empty { display: block; color: var(--ink-300); }
+  .side .mine { margin-top: 12px; font-size: 14px; color: var(--ink-300); }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div>
-      <p class="eyebrow">WorkInTech · Axion</p>
-      <h1>CTF de Criptografia</h1>
-      <p class="muted">Cada participante recebe puzzles próprios. Escreva o seu código, descubra a flag e envie no formato <span style="font-family:var(--mono);color:var(--text)">FLAG{...}</span>.</p>
-    </div>
-    <div class="player-chip" id="chip" hidden>
-      <span>jogador: <b id="chip-name"></b></span>
-      <span id="chip-points"></span>
-      <button class="ghost" id="logout" type="button">Sair</button>
-    </div>
-  </header>
+<header class="brandbar">
+  <span class="by-axion"><span>by</span><img src="{{ url_for('static', filename='axion-logo.svg') }}" alt="Axion" width="94" height="26"></span>
+  <img class="wit" src="{{ url_for('static', filename='wit-mark.png') }}" alt="WorkInTech" width="85" height="32">
+</header>
 
-  <section class="card" id="login" style="max-width:520px" hidden>
-    <h2>Entrar</h2>
-    <p class="muted">Escolha um apelido. Não use dados pessoais reais. Seus puzzles são gerados a partir dele.</p>
-    <form id="login-form" autocomplete="off">
-      <label for="nick">Apelido</label>
+<p class="offline" id="offline" role="alert" hidden>Sem conexão com o servidor do CTF. Tentando de novo a cada poucos segundos.</p>
+
+<main class="page">
+  <div class="intro">
+    <h1 class="two-voice">CTF de <b>Criptografia</b></h1>
+    <p>Três níveis, um para cada cifra da oficina. Rode o seu código no texto que você recebeu e envie a flag.</p>
+  </div>
+
+  <section class="entry" id="entry" aria-labelledby="entry-title" hidden>
+    <h2 id="entry-title">Escolha um apelido</h2>
+    <p>O apelido define o seu texto cifrado e a sua resposta: ninguém mais recebe a mesma. Não use o seu nome completo.</p>
+    <form id="entry-form" autocomplete="off" novalidate>
+      <label for="nick">Apelido (2 a 24 caracteres)</label>
       <div class="row">
-        <input type="text" id="nick" maxlength="24" placeholder="ex.: ada_lovelace" required>
-        <button type="submit">Começar</button>
+        <input type="text" id="nick" maxlength="24" placeholder="ex.: ada_lovelace" aria-describedby="entry-msg" autocapitalize="off" spellcheck="false">
+        <button class="btn" type="submit" id="entry-btn">Começar</button>
       </div>
-      <p class="feedback bad" id="login-error" role="alert"></p>
+      <p class="msg bad" id="entry-msg" role="alert"></p>
     </form>
   </section>
 
   <div class="layout" id="game" hidden>
-    <div class="stack" id="levels"></div>
-    <aside class="card">
-      <h2>Placar</h2>
-      <table>
-        <thead><tr><th>#</th><th>Jogador</th><th style="text-align:right">Pts</th></tr></thead>
-        <tbody id="board"></tbody>
-      </table>
+    <div>
+      <div class="player">
+        <p class="who">Jogando como <strong id="me-nick"></strong></p>
+        <span id="me-trail"></span>
+        <p class="pts" id="me-pts" aria-live="polite"></p>
+        <button class="btn quiet" type="button" id="leave">Sair</button>
+      </div>
+      <ol class="levels" id="levels"></ol>
+    </div>
+    <aside class="side" aria-labelledby="side-title">
+      <h2 id="side-title">Placar</h2>
+      <p class="sub">Atualiza sozinho. O telão mostra o mesmo.</p>
+      <ol class="rank" id="rank"></ol>
+      <p class="mine" id="mine" hidden></p>
     </aside>
   </div>
-</div>
+</main>
 
+<script src="{{ url_for('static', filename='trilha.js') }}"></script>
 <script>
 const $ = s => document.querySelector(s);
 let me = null;
 
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
 async function api(path, body) {
   const opts = body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
-  const res = await fetch(path, opts);
-  let data = {};
-  try { data = await res.json(); } catch (e) { /* resposta vazia */ }
-  return { status: res.status, data };
+  try {
+    const res = await fetch(path, opts);
+    let data = {};
+    try { data = await res.json(); } catch (e) { /* resposta sem JSON */ }
+    $('#offline').hidden = true;
+    return { status: res.status, data };
+  } catch (e) {
+    $('#offline').hidden = false;
+    return { status: 0, data: {} };
+  }
+}
+
+function solvedIds() { return me.levels.filter(l => l.solved).map(l => l.id); }
+
+function paintPlayer() {
+  $('#me-nick').textContent = me.nick;
+  $('#me-pts').textContent = me.points + ' pts';
+  const t = $('#me-trail');
+  t.textContent = '';
+  t.append(trilhaSVG(solvedIds(), { gap: 64, r: 8, rotulos: true }));
 }
 
 function show() {
   const logged = !!(me && me.logged_in);
-  $('#login').hidden = logged;
+  $('#entry').hidden = logged;
   $('#game').hidden = !logged;
-  $('#chip').hidden = !logged;
-  if (logged) {
-    $('#chip-name').textContent = me.nick;
-    $('#chip-points').textContent = me.points + ' pts';
-    renderLevels();
-    refreshBoard();
-  }
+  if (logged) { paintPlayer(); renderLevels(); refreshBoard(); }
+  else { $('#nick').focus(); }
 }
 
 function renderLevels() {
-  const wrap = $('#levels');
-  wrap.textContent = '';
-  me.levels.forEach(l => {
-    const card = document.createElement('section');
-    card.className = 'card';
-    card.innerHTML =
-      '<div class="level-head"><h2></h2><span class="tag"></span></div>' +
-      '<p class="muted desc"></p><pre class="puzzle"></pre>' +
-      '<button class="ghost copy" type="button">Copiar dados</button>' +
-      '<form class="submit" autocomplete="off" style="margin-top:16px"><label>Sua flag</label>' +
-      '<div class="row"><input type="text" placeholder="FLAG{...}" required><button type="submit">Enviar flag</button></div>' +
-      '<p class="feedback" role="status" aria-live="polite"></p></form>' +
-      '<details><summary>Dica</summary><p class="hint" style="margin-top:8px"></p></details>';
-    card.querySelector('h2').textContent = l.title;
-    card.querySelector('.desc').textContent = l.desc;
-    card.querySelector('.hint').textContent = l.hint;
-    const pre = card.querySelector('pre');
-    // Um valor por linha, sem rótulo no texto copiado: facilita colar direto no Python.
-    pre.textContent = l.lines.map(x => x.label + ': ' + x.value).join('\n');
-    const tag = card.querySelector('.tag');
-    const fb = card.querySelector('.feedback');
-    const input = card.querySelector('input');
-    const submit = card.querySelector('form button');
-    function paintTag() {
-      if (l.solved) { tag.textContent = 'resolvido · +' + l.points; tag.className = 'tag done'; }
-      else { tag.textContent = l.points + ' pts'; tag.className = 'tag'; }
+  const list = $('#levels');
+  list.textContent = '';
+  me.levels.forEach(l => list.append(levelItem(l)));
+}
+
+function levelItem(l) {
+  const li = el('li', 'level' + (l.solved ? ' solved' : ''));
+  li.id = 'nivel-' + l.id;
+
+  const head = el('div', 'level-head');
+  const h2 = el('h2');
+  h2.append(el('span', 'n', l.id + '.'), document.createTextNode(l.name));
+  head.append(h2, el('p', 'value', l.solved ? '+' + l.points + ' pts' : l.points + ' pts'));
+  li.append(head, el('p', 'desc', l.desc));
+
+  // Um texto longo vira um bloco; vários números curtos (RSA) viram pares rótulo = valor numa caixa só.
+  const pairs = l.lines.length > 1;
+  const data = el('div', pairs ? 'data pairs' : 'data');
+  l.lines.forEach(x => {
+    if (pairs) {
+      data.append(el('p', 'data-label', x.label), el('pre', 'data-value', x.value));
+    } else {
+      const item = el('div', 'data-item');
+      item.append(el('p', 'data-label', x.label), el('pre', 'data-value', x.value));
+      data.append(item);
     }
-    paintTag();
-    card.querySelector('.copy').addEventListener('click', async () => {
-      const first = l.lines[0].value;
-      try { await navigator.clipboard.writeText(l.lines.filter(x => x.label !== 'Dica').map(x => x.value).join('\n')); fb.textContent = 'Dados copiados.'; fb.className = 'feedback ok'; }
-      catch (e) { fb.textContent = 'Não foi possível copiar. Selecione o texto manualmente.'; fb.className = 'feedback bad'; }
-    });
-    card.querySelector('form').addEventListener('submit', async ev => {
-      ev.preventDefault();
-      if (l.solved) { fb.textContent = 'Você já resolveu este nível.'; fb.className = 'feedback ok'; return; }
-      submit.disabled = true;
-      const { data } = await api('/api/submit', { level: l.id, flag: input.value });
-      fb.textContent = data.message || data.error || 'Erro inesperado.';
-      fb.className = 'feedback ' + (data.ok ? 'ok' : 'bad');
-      if (data.ok) { l.solved = true; me.points += data.points; paintTag(); $('#chip-points').textContent = me.points + ' pts'; refreshBoard(); }
-      setTimeout(() => { submit.disabled = false; }, data.ok ? 0 : 3000);
-    });
-    wrap.append(card);
   });
+  li.append(data);
+
+  const actions = el('div', 'data-actions');
+  const copy = el('button', 'btn quiet', 'Copiar dados');
+  copy.type = 'button';
+  const copyMsg = el('span', 'msg');
+  copyMsg.setAttribute('aria-live', 'polite');
+  copy.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(l.lines.map(x => x.value).join('\n'));
+      copyMsg.textContent = 'Copiado. Cole no Colab.'; copyMsg.className = 'msg ok';
+    } catch (e) {
+      copyMsg.textContent = 'Não deu para copiar: selecione o texto e use Ctrl+C.'; copyMsg.className = 'msg bad';
+    }
+  });
+  actions.append(copy, copyMsg);
+  li.append(actions);
+
+  if (l.solved) {
+    li.append(el('p', 'done', 'Nível resolvido.'));
+  } else {
+    li.append(flagForm(l));
+  }
+
+  const det = el('details');
+  det.append(el('summary', null, 'Ver dica'), el('p', null, l.hint));
+  li.append(det);
+  return li;
+}
+
+function flagForm(l) {
+  const form = el('form');
+  form.autocomplete = 'off';
+  form.noValidate = true;
+  const id = 'flag-' + l.id;
+  const label = el('label', null, 'Flag no formato ' + l.format);
+  label.htmlFor = id;
+  const row = el('div', 'row');
+  const input = el('input');
+  input.type = 'text'; input.id = id; input.placeholder = l.format;
+  input.setAttribute('autocapitalize', 'characters'); input.spellcheck = false;
+  input.setAttribute('aria-describedby', id + '-msg');
+  const btn = el('button', 'btn', 'Enviar flag');
+  btn.type = 'submit';
+  row.append(input, btn);
+  const msg = el('p', 'msg');
+  msg.id = id + '-msg';
+  msg.setAttribute('aria-live', 'polite');
+  form.append(label, row, msg);
+
+  let timer = null;
+  function waitFor(seconds) {
+    let left = seconds;
+    btn.disabled = true;
+    btn.textContent = 'Aguarde ' + left + ' s';
+    clearInterval(timer);
+    timer = setInterval(() => {
+      left -= 1;
+      if (left <= 0) { clearInterval(timer); btn.disabled = false; btn.textContent = 'Enviar flag'; }
+      else { btn.textContent = 'Aguarde ' + left + ' s'; }
+    }, 1000);
+  }
+
+  form.addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const value = input.value.trim();
+    if (!value) {
+      input.setAttribute('aria-invalid', 'true');
+      msg.textContent = 'Cole a flag antes de enviar.'; msg.className = 'msg bad';
+      input.focus();
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Enviando…';
+    const { status, data } = await api('/api/submit', { level: l.id, flag: value });
+    if (status === 0) { btn.disabled = false; btn.textContent = 'Enviar flag'; msg.textContent = 'Sem conexão. Tente de novo.'; msg.className = 'msg bad'; return; }
+    if (data.ok) {
+      l.solved = true;
+      me.points += data.points || 0;
+      paintPlayer();
+      const fresh = levelItem(l);
+      $('#nivel-' + l.id).replaceWith(fresh);
+      fresh.querySelector('.done').textContent = data.message;
+      refreshBoard();
+      return;
+    }
+    input.setAttribute('aria-invalid', 'true');
+    msg.textContent = data.message || data.error || 'Algo deu errado. Tente de novo.';
+    msg.className = 'msg bad';
+    if (data.wait) waitFor(data.wait);
+    else { btn.disabled = false; btn.textContent = 'Enviar flag'; }
+  });
+  input.addEventListener('input', () => input.removeAttribute('aria-invalid'));
+  return form;
 }
 
 async function refreshBoard() {
-  const { data } = await api('/api/board');
-  const body = $('#board');
-  body.textContent = '';
-  (data || []).forEach((r, i) => {
-    const tr = document.createElement('tr');
-    if (me && r.nick === me.nick) tr.className = 'me';
-    const a = document.createElement('td'); a.textContent = String(i + 1);
-    const b = document.createElement('td'); b.textContent = r.nick;
-    const c = document.createElement('td'); c.className = 'num'; c.textContent = String(r.points);
-    tr.append(a, b, c); body.append(tr);
+  const { status, data } = await api('/api/board');
+  if (status !== 200 || !Array.isArray(data)) return;
+  const list = $('#rank');
+  list.textContent = '';
+  if (data.length === 0 || data.every(r => r.points === 0)) {
+    list.append(el('li', 'empty', 'Ninguém pontuou ainda. O primeiro nível vale 100 pontos.'));
+  }
+  const top = data.filter(r => r.points > 0).slice(0, 10);
+  top.forEach((r, i) => {
+    const li = el('li', me && r.nick === me.nick ? 'me' : '');
+    li.append(el('span', 'pos', (i + 1) + 'º'), el('span', 'nick', r.nick), trilhaSVG(r.levels, { gap: 16, r: 5 }), el('span', 'p', String(r.points)));
+    list.append(li);
   });
+  const pos = data.findIndex(r => me && r.nick === me.nick);
+  const mine = $('#mine');
+  if (pos >= 10 && data[pos].points > 0) {
+    mine.hidden = false;
+    mine.textContent = 'Você está em ' + (pos + 1) + 'º lugar, entre ' + data.length + ' jogadores.';
+  } else { mine.hidden = true; }
 }
 
-$('#login-form').addEventListener('submit', async ev => {
+$('#entry-form').addEventListener('submit', async ev => {
   ev.preventDefault();
-  const { status, data } = await api('/api/login', { nick: $('#nick').value });
-  if (status !== 200) { $('#login-error').textContent = data.error || 'Erro ao entrar.'; return; }
-  $('#login-error').textContent = '';
+  const nick = $('#nick');
+  const btn = $('#entry-btn');
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  const { status, data } = await api('/api/login', { nick: nick.value });
+  btn.disabled = false; btn.textContent = 'Começar';
+  if (status !== 200) {
+    nick.setAttribute('aria-invalid', 'true');
+    $('#entry-msg').textContent = data.error || 'Não foi possível entrar. Confira a conexão e tente de novo.';
+    nick.focus();
+    return;
+  }
+  nick.removeAttribute('aria-invalid');
+  $('#entry-msg').textContent = '';
   me = data; show();
 });
-$('#logout').addEventListener('click', async () => { await api('/api/logout', {}); me = null; $('#nick').value = ''; show(); });
+$('#nick').addEventListener('input', () => $('#nick').removeAttribute('aria-invalid'));
+
+$('#leave').addEventListener('click', async () => {
+  await api('/api/logout', {});
+  me = null; $('#nick').value = ''; show();
+});
 
 (async () => { const { data } = await api('/api/me'); me = data; show(); })();
-setInterval(() => { if (me && me.logged_in) refreshBoard(); }, 5000);
+setInterval(() => { if (me && me.logged_in) refreshBoard(); }, 8000);
 </script>
 </body>
 </html>

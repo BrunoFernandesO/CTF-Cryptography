@@ -1,0 +1,112 @@
+/* CTF de Criptografia · WorkInTech · identidade Axion (tokens do sistema de design "Axion"). */
+:root {
+  color-scheme: dark;
+  --bg-900: #130127;        /* chão */
+  --bg-800: #18032C;        /* texto sobre lima */
+  --surface-700: rgba(28, 6, 52, 0.82);
+  --surface-950: #0B0118;   /* dados e código */
+  --line-600: #3A1D57;
+  --lime-400: #C1FF72;      /* único acento: ação e "resolvido" */
+  --lime-press: #A9E85C;
+  --ink-50: #F9F6FF;
+  --ink-300: #C7B8DD;
+  --ink-500: #9C8DB5;
+  --placeholder-500: #7A5A9A;
+  --error-300: #FFB4A8;     /* mensagens de erro (contraste 10:1 sobre o chão) */
+
+  --font: 'Lexend', Arial, sans-serif;
+  /* unslop-ignore: T02 fontes da marca Axion; mono só em dados (texto cifrado, flags, números) */
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+
+  --r-data: 12px;
+  --r-panel: 24px;
+  --r-solved: 32px;
+  --r-pill: 999px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--bg-900); }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink-50);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.55;
+  background: var(--bg-900);
+}
+/* A foto roxa fica parada atrás do conteúdo, do tamanho da janela. */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1;
+  background: var(--bg-900) url('fundo.jpg') center / cover no-repeat;
+}
+[hidden] { display: none !important; }
+h1, h2, h3, p, ol, ul { margin: 0; }
+button, input { font: inherit; color: inherit; }
+
+/* Faixa da marca: "by Axion" à esquerda, WiT à direita */
+.brandbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  max-width: var(--page-max, none); margin: 0 auto;
+  padding: 20px clamp(16px, 4vw, 56px);
+}
+.by-axion { display: flex; align-items: flex-end; gap: 8px; color: var(--ink-50); text-decoration: none; }
+.by-axion span { font-size: 14px; line-height: 1; padding-bottom: 3px; }
+.by-axion img { height: 26px; width: auto; display: block; }
+.wit { height: 32px; width: auto; display: block; }
+
+/* Título em duas vozes (regra da marca) */
+.two-voice { font-weight: 400; letter-spacing: -0.02em; line-height: 1.05; }
+.two-voice b { font-weight: 700; color: var(--lime-400); }
+
+/* Trilha: a assinatura. Linha de circuito com um nó por nível. */
+.trail { display: inline-flex; align-items: center; }
+.trail svg { display: block; overflow: visible; }
+.trail .wire { stroke: var(--line-600); stroke-width: 3; stroke-linecap: round; }
+.trail .node { fill: var(--bg-900); stroke: var(--ink-300); stroke-width: 2; transition: fill .2s ease-out, stroke .2s ease-out; }
+.trail .node.on { fill: var(--lime-400); stroke: var(--lime-400); }
+.trail text { fill: var(--ink-300); font-family: var(--font); font-size: 11px; }
+.trail text.on { fill: var(--ink-50); font-weight: 600; }
+
+/* Botões */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 10px 22px; border-radius: var(--r-pill);
+  border: 1px solid transparent; cursor: pointer; font-weight: 600; font-size: 15px;
+  background: var(--lime-400); color: var(--bg-800);
+  transition: background-color .15s ease-out, color .15s ease-out, border-color .15s ease-out;
+}
+.btn:active { transform: translateY(1px); }
+.btn:disabled { cursor: not-allowed; background: var(--line-600); color: var(--ink-300); }
+.btn.quiet { background: transparent; color: var(--ink-50); border-color: var(--line-600); font-weight: 400; }
+@media (hover: hover) {
+  .btn:not(:disabled):hover { background: var(--lime-press); }
+  .btn.quiet:not(:disabled):hover { background: transparent; border-color: var(--ink-300); }
+}
+:focus-visible { outline: 2px solid var(--lime-400); outline-offset: 3px; }
+
+/* Campos */
+label { display: block; font-size: 14px; color: var(--ink-300); margin-bottom: 6px; }
+input[type=text] {
+  width: 100%; min-height: 48px; padding: 10px 14px; border-radius: var(--r-data);
+  background: var(--surface-950); border: 1px solid var(--line-600); color: var(--ink-50);
+  font-family: var(--mono); font-size: 16px;
+}
+input[type=text]::placeholder { color: var(--ink-500); }
+input[aria-invalid=true] { border-color: var(--error-300); }
+
+.msg { min-height: 1.55em; font-size: 15px; }
+.msg.ok { color: var(--lime-400); }
+.msg.bad { color: var(--error-300); }
+
+.offline {
+  margin: 0 clamp(16px, 4vw, 56px) 16px; padding: 12px 16px; border-radius: var(--r-data);
+  border: 1px solid var(--error-300); color: var(--error-300); background: var(--surface-950);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important;
+  }
+}
