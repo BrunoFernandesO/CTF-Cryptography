@@ -1,4 +1,4 @@
-"""CTF de Criptografia · WorkInTech (Axion) · V2.
+"""CTF de Criptografia · WorkInTech (Axion) · V3.
 
 Servidor Flask + SQLite. Roda no PythonAnywhere ou em qualquer máquina com Python 3.8+.
 Veja o README.md para instalar, publicar e operar durante o evento."""
@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 
 import click
-from flask import Flask, g, jsonify, render_template, request, session
+from flask import Flask, g, jsonify, redirect, render_template, request, session
 
 import puzzles
 
@@ -175,6 +175,18 @@ def index():
 @app.get("/placar")
 def scoreboard_page():
     return render_template("placar.html")
+
+
+# Endereço curto para os computadores do laboratório: digitar /colab é mais fácil
+# do que a URL do Google Drive. Pode ser trocado sem mexer no código (variável COLAB_URL).
+COLAB_URL = os.environ.get(
+    "COLAB_URL", "https://colab.research.google.com/drive/1N70OYpaif6YbzcAS442WMSWpG9n7g9t7")
+
+
+@app.get("/colab", strict_slashes=False)
+@app.get("/caderno", strict_slashes=False)
+def colab():
+    return redirect(COLAB_URL, code=302)
 
 
 @app.get("/api/me")

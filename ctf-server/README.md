@@ -1,4 +1,4 @@
-# CTF de Criptografia · WorkInTech (Axion) · V2
+# CTF de Criptografia · WorkInTech (Axion) · V3
 
 Servidor do desafio final da oficina **Criptografia na Prática: Matemática e Python do Zero ao RSA**, ministrada por Bruno Fernandes Ortega no WorkInTech 2026 (Axion, UniCesumar). Cada aluno escolhe um apelido, recebe três puzzles próprios (César, Vigenère e RSA pequeno), quebra cada um com o código que escreveu na oficina e envia a flag. O placar do telão atualiza sozinho.
 
@@ -10,7 +10,10 @@ Servidor do desafio final da oficina **Criptografia na Prática: Matemática e P
                            ├─ atribui a cada aluno uma resposta que ninguém mais tem (UNIQUE no banco)
                            └─ confere as flags só no servidor
  Telão ("/placar") ◄── /api/placar a cada 3 s: ranking, primeiro a resolver, últimos acertos
+ "/colab" e "/caderno" ──► redirecionam para o caderno do aluno no Google Colab
 ```
+
+O endereço curto `/colab` existe porque os alunos programam nos computadores do laboratório: digitar `brunofernandeso.pythonanywhere.com/colab` é viável, a URL do Google Drive não. O destino fica na constante `COLAB_URL` do `app.py` (ou na variável de ambiente de mesmo nome).
 
 | Nível | Cifra | O aluno precisa | Respostas diferentes |
 | --- | --- | --- | --- |
@@ -60,7 +63,7 @@ flask --app app respostas APELIDO   # mostra a resposta de um aluno, para ajudar
 
 ```text
 ctf-server/
-├── app.py              rotas, banco, atribuição de respostas, comandos
+├── app.py              rotas (inclusive /colab), banco, atribuição de respostas, comandos
 ├── puzzles.py          listas de palavras e chaves, geração dos puzzles, comparação de flags
 ├── templates/          index.html (alunos) e placar.html (telão)
 ├── static/             ctf.css (tokens da identidade Axion), trilha.js, logos e fundo
