@@ -1,4 +1,4 @@
-"""CTF de Criptografia · WorkInTech (Axion) · V3.
+"""CTF de Criptografia · WorkInTech (Axion) · V4.
 
 Servidor Flask + SQLite. Roda no PythonAnywhere ou em qualquer máquina com Python 3.8+.
 Veja o README.md para instalar, publicar e operar durante o evento."""
@@ -11,6 +11,7 @@ from pathlib import Path
 
 import click
 from flask import Flask, g, jsonify, redirect, render_template, request, session
+from werkzeug.security import check_password_hash, generate_password_hash
 
 import puzzles
 
@@ -72,6 +73,7 @@ CREATE TABLE IF NOT EXISTS attempts (
 CREATE TABLE IF NOT EXISTS assignments (
     nick_key TEXT NOT NULL, level INTEGER NOT NULL, attempt INTEGER NOT NULL, flag_key TEXT NOT NULL,
     PRIMARY KEY (nick_key, level), UNIQUE (level, flag_key));
+CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 """
 
 
@@ -83,6 +85,46 @@ def init_db():
 
 
 init_db()
+
+
+# ---------- níveis abertos/fechados (V4) ----------
+# Fora da aula os níveis ficam fechados: a página não mostra o texto cifrado e o servidor recusa flags.
+# O padrão é tudo fechado; o organizador abre cada nível na hora certa (console ou /organizador).
+def get_setting(conn, key, default=None):
+    row = conn.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+    return row[0] if row else default
+
+
+def set_setting(conn, key, value):
+    conn.execute("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                 (key, value))
+    conn.commit()
+
+
+def open_levels(conn=None) -> set:
+    raw = get_setting(conn or db(), "open_levels", "")
+    return {int(x) for x in raw.split(",") if x.strip().isdigit() and int(x) in puzzles.LEVEL_BY_ID}
+
+
+def set_levels_open(conn, levels, is_open: bool) -> set:
+    cur = open_levels(conn)
+    cur = (cur | set(levels)) if is_open else (cur - set(levels))
+    set_setting(conn, "open_levels", ",".join(str(x) for x in sorted(cur)))
+    return cur
+
+
+def parse_levels(spec) -> list:
+    """'todos' | 1 | '2' | [1, 3] -> lista de níveis válidos; levanta ValueError se algo não existir."""
+    if isinstance(spec, str) and spec.strip().lower() in ("todos", "all"):
+        return [l["id"] for l in puzzles.LEVELS]
+    items = spec if isinstance(spec, (list, tuple)) else [spec]
+    out = []
+    for it in items:
+        n = int(it)
+        if n not in puzzles.LEVEL_BY_ID:
+            raise ValueError(n)
+        out.append(n)
+    return out
 
 
 # ---------- respostas únicas ----------
@@ -129,16 +171,19 @@ def solved_levels(nick_key):
 
 def player_payload(player):
     solved = solved_levels(player["nick_key"])
+    opened = open_levels()
     levels = []
     for l in puzzles.LEVELS:
-        pz = puzzle_for(player["nick_key"], l["id"])
-        levels.append({
-            "id": l["id"], "points": l["points"], "name": l["name"], "title": l["title"],
-            "desc": l["desc"], "hint": l["hint"], "format": l["format"],
-            "lines": [{"label": a, "value": b} for a, b in pz["lines"]],
-            "solved": l["id"] in solved,
-        })
-    return {"nick": player["display"], "points": sum(puzzles.LEVEL_BY_ID[x]["points"] for x in solved), "levels": levels}
+        item = {"id": l["id"], "points": l["points"], "name": l["name"], "title": l["title"],
+                "desc": l["desc"], "format": l["format"], "solved": l["id"] in solved, "open": l["id"] in opened}
+        if item["open"]:
+            pz = puzzle_for(player["nick_key"], l["id"])
+            item.update(hint=l["hint"], lines=[{"label": a, "value": b} for a, b in pz["lines"]])
+        else:  # fechado: nem o texto cifrado nem a dica saem do servidor
+            item.update(hint="", lines=[])
+        levels.append(item)
+    return {"nick": player["display"], "points": sum(puzzles.LEVEL_BY_ID[x]["points"] for x in solved),
+            "levels": levels, "open": sorted(opened)}
 
 
 def board_rows():
@@ -242,6 +287,9 @@ def api_submit():
         return jsonify({"error": "Nível inválido."}), 400
     if level not in puzzles.LEVEL_BY_ID:
         return jsonify({"error": "Nível inválido."}), 400
+    if level not in open_levels():
+        return jsonify({"ok": False, "closed": True,
+                        "message": "Este nível está fechado agora. Ele abre durante a aula."}), 403
     flag = str(data.get("flag", ""))[:200]
     nick_key, conn = player["nick_key"], db()
     pts = puzzles.LEVEL_BY_ID[level]["points"]
@@ -266,6 +314,12 @@ def api_submit():
                     "message": f"Flag incorreta. Confira o formato {puzzles.LEVEL_BY_ID[level]['format']}. Próxima tentativa em {wait} s."})
 
 
+@app.get("/api/estado")
+def api_estado():
+    """Consulta leve que a página do aluno repete a cada 10 s para saber quando um nível abriu."""
+    return jsonify({"open": sorted(open_levels())})
+
+
 @app.get("/api/board")
 def api_board():
     return jsonify(board_rows())
@@ -287,9 +341,99 @@ def api_placar():
     counts = {l["id"]: conn.execute("SELECT COUNT(*) FROM solves WHERE level=?", (l["id"],)).fetchone()[0]
               for l in puzzles.LEVELS}
     rows = board_rows()
+    opened = open_levels()
     return jsonify({"rows": rows[:12], "players": len(rows), "firsts": firsts, "feed": feed,
+                    "open": [puzzles.LEVEL_BY_ID[x]["name"] for x in sorted(opened)],
                     "counts": [{"level": k, "name": puzzles.LEVEL_BY_ID[k]["name"], "solved": v} for k, v in counts.items()],
                     "now": time.time()})
+
+
+# ---------- painel do organizador (V4) ----------
+LOGIN_FAILS = {}            # ip -> [falhas, bloqueado_até]
+GLOBAL_FAILS = []           # horários das falhas recentes, de qualquer ip
+MAX_FAILS_IP, LOCK_IP_S = 5, 300
+MAX_FAILS_GLOBAL, WINDOW_GLOBAL_S = 20, 300
+
+
+def client_ip():
+    return (request.headers.get("X-Real-IP") or request.remote_addr or "?").strip()
+
+
+def admin_required():
+    if not session.get("admin"):
+        return jsonify({"error": "Entre com a senha do organizador."}), 401
+    if not request.method == "GET" and not request.is_json:
+        return jsonify({"error": "Pedido inválido."}), 400
+    return None
+
+
+def admin_state():
+    conn = db()
+    opened = open_levels(conn)
+    levels = []
+    for l in puzzles.LEVELS:
+        solved = conn.execute("SELECT COUNT(*) FROM solves WHERE level=?", (l["id"],)).fetchone()[0]
+        levels.append({"id": l["id"], "name": l["name"], "points": l["points"], "open": l["id"] in opened,
+                       "solved": solved})
+    players = conn.execute("SELECT COUNT(*) FROM players").fetchone()[0]
+    return {"levels": levels, "players": players, "open": sorted(opened)}
+
+
+@app.get("/organizador")
+def organizer_page():
+    return render_template("organizador.html")
+
+
+@app.post("/api/organizador/entrar")
+def organizer_login():
+    if not request.is_json:
+        return jsonify({"error": "Pedido inválido."}), 400
+    now, ip = time.time(), client_ip()
+    fails, until = LOGIN_FAILS.get(ip, [0, 0])
+    GLOBAL_FAILS[:] = [t for t in GLOBAL_FAILS if now - t < WINDOW_GLOBAL_S]
+    if until > now:
+        return jsonify({"error": f"Muitas tentativas. Espere {int(until - now) + 1} s."}), 429
+    if len(GLOBAL_FAILS) >= MAX_FAILS_GLOBAL:
+        return jsonify({"error": "Muitas tentativas erradas. Espere alguns minutos."}), 429
+    stored = get_setting(db(), "admin_hash")
+    if not stored:
+        return jsonify({"error": "A senha ainda não foi criada. No console: flask --app app senha"}), 409
+    senha = str((request.get_json(silent=True) or {}).get("senha", ""))[:200]
+    if not check_password_hash(stored, senha):
+        fails += 1
+        GLOBAL_FAILS.append(now)
+        LOGIN_FAILS[ip] = [0, now + LOCK_IP_S] if fails >= MAX_FAILS_IP else [fails, 0]
+        return jsonify({"error": "Senha incorreta."}), 401
+    LOGIN_FAILS.pop(ip, None)
+    session.permanent = True
+    session["admin"] = True
+    return jsonify(admin_state())
+
+
+@app.post("/api/organizador/sair")
+def organizer_logout():
+    session.pop("admin", None)
+    return jsonify({"ok": True})
+
+
+@app.get("/api/organizador/estado")
+def organizer_state():
+    denied = admin_required()
+    return denied or jsonify(admin_state())
+
+
+@app.post("/api/organizador/niveis")
+def organizer_levels():
+    denied = admin_required()
+    if denied:
+        return denied
+    data = request.get_json(silent=True) or {}
+    try:
+        levels = parse_levels(data.get("nivel"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Nível inválido."}), 400
+    set_levels_open(db(), levels, bool(data.get("aberto")))
+    return jsonify(admin_state())
 
 
 # ---------- comandos do organizador ----------
@@ -311,8 +455,9 @@ def zerar():
     conn = sqlite3.connect(DB_PATH)
     conn.executescript("DELETE FROM attempts; DELETE FROM solves; DELETE FROM assignments; DELETE FROM players;")
     conn.commit()
+    click.echo("Banco zerado (a senha e o estado dos níveis continuam):")
+    _cli_status(conn)
     conn.close()
-    click.echo("Banco zerado.")
 
 
 @app.cli.command("respostas")
@@ -328,6 +473,59 @@ def respostas(nick):
     for level, attempt in rows:
         pz = puzzles.make_puzzle(SECRET, nick_key, level, attempt)
         click.echo(f"Nível {level}: {pz['flag']}  {pz['solution']}")
+
+
+def _cli_levels(spec):
+    try:
+        return parse_levels(list(spec) if len(spec) > 1 else spec[0])
+    except (TypeError, ValueError, IndexError):
+        raise click.BadParameter("use 1, 2, 3 ou todos (ex.: abrir 2 3)")
+
+
+def _cli_status(conn):
+    opened = open_levels(conn)
+    for l in puzzles.LEVELS:
+        click.echo(f"  Nível {l['id']} ({l['name']}): {'ABERTO' if l['id'] in opened else 'fechado'}")
+
+
+@app.cli.command("abrir")
+@click.argument("niveis", nargs=-1, required=True)
+def abrir(niveis):
+    """Abre níveis: flask --app app abrir 1   |   abrir 2 3   |   abrir todos"""
+    conn = sqlite3.connect(DB_PATH)
+    set_levels_open(conn, _cli_levels(niveis), True)
+    _cli_status(conn)
+    conn.close()
+
+
+@app.cli.command("fechar")
+@click.argument("niveis", nargs=-1, required=True)
+def fechar(niveis):
+    """Fecha níveis: flask --app app fechar todos   |   fechar 3"""
+    conn = sqlite3.connect(DB_PATH)
+    set_levels_open(conn, _cli_levels(niveis), False)
+    _cli_status(conn)
+    conn.close()
+
+
+@app.cli.command("status")
+def status():
+    """Mostra quais níveis estão abertos."""
+    conn = sqlite3.connect(DB_PATH)
+    _cli_status(conn)
+    conn.close()
+
+
+@app.cli.command("senha")
+@click.password_option("--senha", prompt="Nova senha do organizador", confirmation_prompt="Repita a senha")
+def senha(senha):
+    """Cria ou troca a senha do painel /organizador (mínimo de 8 caracteres)."""
+    if len(senha) < 8:
+        raise click.BadParameter("use pelo menos 8 caracteres")
+    conn = sqlite3.connect(DB_PATH)
+    set_setting(conn, "admin_hash", generate_password_hash(senha))
+    conn.close()
+    click.echo("Senha salva. Entre em /organizador.")
 
 
 if __name__ == "__main__":

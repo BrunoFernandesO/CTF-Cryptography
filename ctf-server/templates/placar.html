@@ -155,6 +155,11 @@ function paint(d) {
     foot.append(document.createTextNode((i ? (i === d.counts.length - 1 ? ' e ' : ', ') : '') + c.name + ' '), el('b', null, String(c.solved)));
   });
   foot.append(document.createTextNode('.'));
+  if (Array.isArray(d.open)) {
+    const lista = d.open.length ? d.open.join(d.open.length > 2 ? ', ' : ' e ').replace(/, ([^,]*)$/, ' e $1') : null;
+    foot.append(document.createTextNode(lista ? ' Abertos agora: ' : ' Nenhum nível aberto agora.'));
+    if (lista) foot.append(el('b', null, lista), document.createTextNode('.'));
+  }
 }
 
 async function tick() {

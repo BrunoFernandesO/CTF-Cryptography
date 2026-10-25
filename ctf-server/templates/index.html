@@ -46,6 +46,11 @@
   .level-head .value { font-family: var(--mono); color: var(--ink-300); white-space: nowrap; }
   .level.solved .level-head .value { color: var(--lime-400); }
   .desc { color: var(--ink-300); max-width: 62ch; margin-bottom: 18px; }
+  /* Nível fechado (V4): sem dados, sem formulário; só o aviso de que abre durante a aula. */
+  .level.closed { background: transparent; border-style: dashed; border-color: var(--placeholder-500); }
+  .level.closed .level-head h2 { color: var(--ink-300); }
+  .closed-note { margin: 0; color: var(--ink-50); font-weight: 600; }
+  .closed-note span { display: block; margin-top: 4px; color: var(--ink-300); font-weight: 400; }
 
   .data { display: grid; gap: 10px; margin-bottom: 10px; }
   .data.pairs { grid-template-columns: max-content minmax(0, 1fr); gap: 4px 16px; background: var(--surface-950); border: 1px solid var(--line-600); border-radius: var(--r-data); padding: 12px 14px; }
@@ -174,14 +179,23 @@ function renderLevels() {
 }
 
 function levelItem(l) {
-  const li = el('li', 'level' + (l.solved ? ' solved' : ''));
+  const closed = !l.open;
+  const li = el('li', 'level' + (l.solved ? ' solved' : closed ? ' closed' : ''));
   li.id = 'nivel-' + l.id;
 
   const head = el('div', 'level-head');
   const h2 = el('h2');
   h2.append(el('span', 'n', l.id + '.'), document.createTextNode(l.name));
   head.append(h2, el('p', 'value', l.solved ? '+' + l.points + ' pts' : l.points + ' pts'));
-  li.append(head, el('p', 'desc', l.desc));
+  li.append(head);
+
+  if (closed) {
+    const note = el('p', 'closed-note', l.solved ? 'Nível resolvido.' : 'Este nível ainda está fechado.');
+    if (!l.solved) note.append(el('span', null, 'Ele abre durante a aula. Esta página se atualiza sozinha.'));
+    li.append(note);
+    return li;
+  }
+  li.append(el('p', 'desc', l.desc));
 
   // Um texto longo vira um bloco; vários números curtos (RSA) viram pares rótulo = valor numa caixa só.
   const pairs = l.lines.length > 1;
@@ -281,6 +295,7 @@ function flagForm(l) {
       refreshBoard();
       return;
     }
+    if (data.closed) { checkOpen(true); }
     input.setAttribute('aria-invalid', 'true');
     msg.textContent = data.message || data.error || 'Algo deu errado. Tente de novo.';
     msg.className = 'msg bad';
@@ -339,6 +354,25 @@ $('#leave').addEventListener('click', async () => {
 
 (async () => { const { data } = await api('/api/me'); me = data; show(); })();
 setInterval(() => { if (me && me.logged_in) refreshBoard(); }, 8000);
+
+// V4: quando o organizador abre ou fecha um nível, troca só o card daquele nível
+// (o que o aluno digitou nos outros continua lá).
+async function checkOpen(force) {
+  if (!me || !me.logged_in) return;
+  const { status, data } = await api('/api/estado');
+  if (status !== 200 || !Array.isArray(data.open)) return;
+  const now = data.open.join(',');
+  if (!force && now === (me.open || []).join(',')) return;
+  const fresh = await api('/api/me');
+  if (fresh.status !== 200 || !fresh.data.logged_in) return;
+  const before = Object.fromEntries(me.levels.map(l => [l.id, l.open]));
+  me = fresh.data;
+  me.levels.forEach(l => {
+    if (before[l.id] !== l.open) { const node = $('#nivel-' + l.id); if (node) node.replaceWith(levelItem(l)); }
+  });
+  paintPlayer();
+}
+setInterval(() => checkOpen(false), 10000);
 </script>
 </body>
 </html>

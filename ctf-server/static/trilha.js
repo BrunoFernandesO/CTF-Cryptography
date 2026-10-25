@@ -1,11 +1,11 @@
-// Trilha de circuito: um nó por nível, aceso em lima quando resolvido. Usada na página do aluno e no telão.
+// Trilha de circuito: um nó por nível, aceso em lima quando resolvido (aluno e telão) ou aberto (painel do organizador).
 const NIVEIS = [
   { id: 1, nome: 'César' },
   { id: 2, nome: 'Vigenère' },
   { id: 3, nome: 'RSA' },
 ];
 
-function trilhaSVG(resolvidos, { gap = 44, r = 7, rotulos = false } = {}) {
+function trilhaSVG(resolvidos, { gap = 44, r = 7, rotulos = false, sim = 'resolvido', nao = 'pendente' } = {}) {
   const feitos = new Set(resolvidos);
   const pad = rotulos ? 26 : r + 2;
   const w = pad * 2 + gap * (NIVEIS.length - 1);
@@ -18,7 +18,7 @@ function trilhaSVG(resolvidos, { gap = 44, r = 7, rotulos = false } = {}) {
   svg.setAttribute('height', h);
   svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', NIVEIS.map(n => `${n.nome} ${feitos.has(n.id) ? 'resolvido' : 'pendente'}`).join(', '));
+  svg.setAttribute('aria-label', NIVEIS.map(n => `${n.nome} ${feitos.has(n.id) ? sim : nao}`).join(', '));
   const wire = document.createElementNS(ns, 'line');
   wire.setAttribute('class', 'wire');
   wire.setAttribute('x1', x(0)); wire.setAttribute('x2', x(NIVEIS.length - 1));

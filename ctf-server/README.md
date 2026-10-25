@@ -1,4 +1,4 @@
-# CTF de Criptografia · WorkInTech (Axion) · V3
+# CTF de Criptografia · WorkInTech (Axion) · V4
 
 Servidor do desafio final da oficina **Criptografia na Prática: Matemática e Python do Zero ao RSA**, ministrada por Bruno Fernandes Ortega no WorkInTech 2026 (Axion, UniCesumar). Cada aluno escolhe um apelido, recebe três puzzles próprios (César, Vigenère e RSA pequeno), quebra cada um com o código que escreveu na oficina e envia a flag. O placar do telão atualiza sozinho.
 
@@ -11,6 +11,7 @@ Servidor do desafio final da oficina **Criptografia na Prática: Matemática e P
                            └─ confere as flags só no servidor
  Telão ("/placar") ◄── /api/placar a cada 3 s: ranking, primeiro a resolver, últimos acertos
  "/colab" e "/caderno" ──► redirecionam para o caderno do aluno no Google Colab
+ "/organizador" ──► painel com senha para abrir e fechar cada nível durante a aula
 ```
 
 O endereço curto `/colab` existe porque os alunos programam nos computadores do laboratório: digitar `brunofernandeso.pythonanywhere.com/colab` é viável, a URL do Google Drive não. O destino fica na constante `COLAB_URL` do `app.py` (ou na variável de ambiente de mesmo nome).
@@ -23,10 +24,10 @@ O endereço curto `/colab` existe porque os alunos programam nos computadores do
 
 Garantias:
 
+- **Níveis abrem só na aula (V4).** Cada nível tem um interruptor; o padrão é fechado. Fechado, a página não mostra o texto cifrado nem a dica e o servidor recusa flags, então ninguém resolve em casa com um site pronto. Os alunos veem o nível aparecer sozinho, em até 10 s, quando o organizador abre.
 - **Nenhuma resposta repetida.** Na primeira vez que um aluno vê um nível, o servidor procura uma tentativa cuja flag ninguém mais tenha e grava essa escolha (`assignments`, com `UNIQUE (level, flag_key)`). No nível 2, isso vale até 131 jogadores; a partir daí as chaves voltam a se repetir.
 - **Sem chute em massa.** Cada erro custa uma espera que cresce: 3 s nos primeiros 5 erros, 30 s do 6º ao 10º e 120 s depois disso (por jogador e por nível).
 - **Flags tolerantes ao formato.** Maiúsculas ou minúsculas, espaço, hífen ou sublinhado: `flag{chave urso}` vale como `FLAG{CHAVE-URSO}`.
-- **Testado:** 200 jogadores simulados, ataques dos slides resolvendo 180 de 180 puzzles, banco da V1 atualizado sem perder dados.
 
 ## Rodar localmente
 
@@ -51,13 +52,21 @@ if path not in sys.path:
 from app import app as application
 ```
 
+Ao atualizar uma versão já publicada, substitua só os arquivos do código e **mantenha `secret.key` e `ctf.db`**. Depois, clique em **Reload** na aba Web.
+
 ## Comandos do organizador
 
 ```bash
 flask --app app zerar               # apaga jogadores, pontos e puzzles (antes de cada turma)
 flask --app app liberar APELIDO     # aluno perdeu o login: o próximo acesso com esse nome assume a conta
 flask --app app respostas APELIDO   # mostra a resposta de um aluno, para ajudar quem travou
+flask --app app senha               # cria ou troca a senha do painel /organizador (mínimo 8 caracteres)
+flask --app app abrir 1             # abre níveis: abrir 2 3   |   abrir todos
+flask --app app fechar todos        # fecha níveis
+flask --app app status              # mostra o que está aberto
 ```
+
+O painel `/organizador` faz o mesmo que `abrir` e `fechar`, pelo celular. Cinco senhas erradas bloqueiam o endereço por 5 minutos. O `zerar` não mexe na senha nem nos níveis abertos.
 
 ## Estrutura
 
@@ -65,7 +74,7 @@ flask --app app respostas APELIDO   # mostra a resposta de um aluno, para ajudar
 ctf-server/
 ├── app.py              rotas (inclusive /colab), banco, atribuição de respostas, comandos
 ├── puzzles.py          listas de palavras e chaves, geração dos puzzles, comparação de flags
-├── templates/          index.html (alunos) e placar.html (telão)
+├── templates/          index.html (alunos), placar.html (telão) e organizador.html (painel)
 ├── static/             ctf.css (tokens da identidade Axion), trilha.js, logos e fundo
 └── requirements.txt    Flask
 ```

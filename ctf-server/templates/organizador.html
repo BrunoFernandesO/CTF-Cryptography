@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Organizador · CTF de Criptografia · WorkInTech</title>
+<meta name="theme-color" content="#130127">
+<link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- unslop-ignore: T02 Lexend e JetBrains Mono são as fontes da marca Axion (sistema de design / axion-ui) -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="{{ url_for('static', filename='ctf.css') }}">
+<style>
+  /* Pensado para o celular, com uma mão, durante a aula: alvos grandes, estado legível de longe. */
+  :root { --page-max: 560px; }
+  .page { max-width: var(--page-max); margin: 0 auto; padding: 4px 16px 56px; }
+  h1 { font-size: clamp(30px, 8vw, 40px); margin: 8px 0 6px; }
+  .lead { color: var(--ink-300); margin-bottom: 24px; }
+
+  .panel { background: var(--surface-700); border: 1px solid var(--line-600); border-radius: var(--r-panel); padding: 22px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .login-title { font-size: 20px; margin-bottom: 12px; }
+  /* ctf.css só estiliza campos de texto; a senha usa o mesmo desenho */
+  input[type=password] { width: 100%; min-height: 48px; padding: 10px 14px; border-radius: var(--r-data);
+    background: var(--surface-950); border: 1px solid var(--line-600); color: var(--ink-50); font-size: 16px; }
+  input[type=password][aria-invalid=true] { border-color: var(--error-300); }
+  .row input { flex: 1 1 12rem; width: auto; }
+
+  .now { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+  .now .who { color: var(--ink-300); font-size: 15px; }
+  .now .who b { color: var(--ink-50); font-weight: 600; }
+
+  .levels { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .lv { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px;
+        background: var(--surface-700); border: 1px solid var(--line-600); border-radius: var(--r-panel); padding: 16px 18px; }
+  .lv.open { border-color: var(--lime-400); }
+  .lv h2 { font-size: 20px; font-weight: 600; }
+  .lv h2 .n { color: var(--ink-300); font-weight: 400; margin-right: 6px; }
+  .lv .state { font-size: 15px; color: var(--ink-300); }
+  .lv.open .state b { color: var(--lime-400); }
+  .lv .state b { font-weight: 600; color: var(--ink-50); }
+  .lv .btn { min-width: 7.5rem; }
+
+  .bulk { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+  .btn.quiet:disabled { background: transparent; color: var(--ink-500); border-color: var(--line-600); border-style: dashed; }
+  .bulk .btn { flex: 1 1 10rem; }
+  .foot { margin-top: 28px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .foot p { color: var(--ink-300); font-size: 14px; max-width: 34ch; }
+</style>
+</head>
+<body>
+<header class="brandbar">
+  <span class="by-axion"><span>by</span><img src="{{ url_for('static', filename='axion-logo.svg') }}" alt="Axion" width="94" height="26"></span>
+  <img class="wit" src="{{ url_for('static', filename='wit-mark.png') }}" alt="WorkInTech" width="85" height="32">
+</header>
+
+<p class="offline" id="offline" role="alert" hidden>Sem conexão com o servidor. Os botões voltam a funcionar quando a conexão voltar.</p>
+
+<main class="page">
+  <h1 class="two-voice">Painel do <b>organizador</b></h1>
+  <p class="lead">Abre e fecha os níveis do CTF. Nível fechado não mostra o texto cifrado e não aceita flags.</p>
+
+  <section class="panel" id="login" aria-labelledby="login-title">
+    <h2 id="login-title" class="login-title">Entrar</h2>
+    <form id="login-form" autocomplete="off" novalidate>
+      <label for="senha">Senha do organizador</label>
+      <div class="row">
+        <input type="password" id="senha" autocomplete="current-password" aria-describedby="login-msg">
+        <button class="btn" type="submit" id="login-btn">Entrar</button>
+      </div>
+      <p class="msg" id="login-msg" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <section id="painel" hidden aria-label="Níveis">
+    <div class="now">
+      <span id="trail"></span>
+      <p class="who" id="who"></p>
+    </div>
+    <ol class="levels" id="levels"></ol>
+    <div class="bulk">
+      <button class="btn quiet" type="button" id="abrir-todos">Abrir todos</button>
+      <button class="btn quiet" type="button" id="fechar-todos">Fechar todos</button>
+    </div>
+    <p class="msg" id="msg" aria-live="polite"></p>
+    <div class="foot">
+      <p>Fim da aula? Feche todos antes de sair.</p>
+      <button class="btn quiet" type="button" id="sair">Sair</button>
+    </div>
+  </section>
+</main>
+
+<script src="{{ url_for('static', filename='trilha.js') }}"></script>
+<script>
+const $ = s => document.querySelector(s);
+let state = null;
+let busy = false;
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+async function api(path, body) {
+  const opts = body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  try {
+    const res = await fetch(path, opts);
+    let data = {};
+    try { data = await res.json(); } catch (e) { /* sem JSON */ }
+    $('#offline').hidden = true;
+    return { status: res.status, data };
+  } catch (e) {
+    $('#offline').hidden = false;
+    return { status: 0, data: {} };
+  }
+}
+
+function say(text, ok) { const m = $('#msg'); m.textContent = text; m.className = 'msg ' + (ok ? 'ok' : 'bad'); }
+
+function paint() {
+  $('#login').hidden = !!state;
+  $('#painel').hidden = !state;
+  if (!state) return;
+  const t = $('#trail');
+  t.textContent = '';
+  t.append(trilhaSVG(state.open, { gap: 64, r: 9, rotulos: true, sim: 'aberto', nao: 'fechado' }));
+  $('#who').textContent = '';
+  $('#who').append(el('b', null, String(state.players)), document.createTextNode(state.players === 1 ? ' jogador' : ' jogadores'));
+
+  const list = $('#levels');
+  list.textContent = '';
+  state.levels.forEach(l => {
+    const li = el('li', 'lv' + (l.open ? ' open' : ''));
+    const info = el('div');
+    const h2 = el('h2');
+    h2.append(el('span', 'n', l.id + '.'), document.createTextNode(l.name));
+    const st = el('p', 'state');
+    st.append(el('b', null, l.open ? 'Aberto' : 'Fechado'),
+              document.createTextNode(' · ' + l.solved + (l.solved === 1 ? ' resolveu' : ' resolveram')));
+    info.append(h2, st);
+    const btn = el('button', l.open ? 'btn quiet' : 'btn', l.open ? 'Fechar' : 'Abrir');
+    btn.type = 'button';
+    btn.setAttribute('aria-label', (l.open ? 'Fechar' : 'Abrir') + ' o nível ' + l.id + ', ' + l.name);
+    btn.addEventListener('click', () => change(l.id, !l.open, btn, l.open ? 'Fechando…' : 'Abrindo…'));
+    li.append(info, btn);
+    list.append(li);
+  });
+  const all = state.levels.every(l => l.open), none = state.levels.every(l => !l.open);
+  $('#abrir-todos').disabled = all;
+  $('#fechar-todos').disabled = none;
+}
+
+async function change(nivel, aberto, btn, label) {
+  if (busy) return;
+  busy = true;
+  const old = btn.textContent;
+  btn.disabled = true; btn.textContent = label;
+  const { status, data } = await api('/api/organizador/niveis', { nivel, aberto });
+  busy = false;
+  if (status === 200) {
+    state = data; paint();
+    const nomes = nivel === 'todos' ? 'Todos os níveis' : 'Nível ' + nivel;
+    say(nomes + (aberto ? (nivel === 'todos' ? ' abertos.' : ' aberto.') : (nivel === 'todos' ? ' fechados.' : ' fechado.')), true);
+    return;
+  }
+  btn.disabled = false; btn.textContent = old;
+  if (status === 401) { state = null; paint(); $('#login-msg').textContent = 'Sua sessão expirou. Entre de novo.'; return; }
+  if (status !== 0) say(data.error || 'Não deu certo. Tente de novo.', false);
+}
+
+$('#abrir-todos').addEventListener('click', e => change('todos', true, e.currentTarget, 'Abrindo…'));
+$('#fechar-todos').addEventListener('click', e => change('todos', false, e.currentTarget, 'Fechando…'));
+
+$('#login-form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const input = $('#senha'), btn = $('#login-btn'), m = $('#login-msg');
+  if (!input.value) { input.setAttribute('aria-invalid', 'true'); m.textContent = 'Digite a senha.'; m.className = 'msg bad'; input.focus(); return; }
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  const { status, data } = await api('/api/organizador/entrar', { senha: input.value });
+  btn.disabled = false; btn.textContent = 'Entrar';
+  if (status === 200) { input.value = ''; m.textContent = ''; state = data; paint(); return; }
+  input.setAttribute('aria-invalid', 'true');
+  m.textContent = status === 0 ? 'Sem conexão. Tente de novo.' : (data.error || 'Não deu certo.');
+  m.className = 'msg bad';
+});
+$('#senha').addEventListener('input', e => e.target.removeAttribute('aria-invalid'));
+
+$('#sair').addEventListener('click', async () => { await api('/api/organizador/sair', {}); state = null; paint(); $('#senha').focus(); });
+
+async function refresh() {
+  const { status, data } = await api('/api/organizador/estado');
+  if (status === 200) { if (!busy) { state = data; paint(); } }
+  else if (status === 401) { state = null; paint(); }
+}
+refresh();
+setInterval(() => { if (state) refresh(); }, 5000);
+</script>
+</body>
+</html>
