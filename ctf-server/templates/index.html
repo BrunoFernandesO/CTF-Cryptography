@@ -25,6 +25,18 @@
   .entry > p { color: var(--ink-300); margin-bottom: 20px; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; }
   .row input { flex: 1 1 14rem; width: auto; }
+  /* V4.3: apelido + PIN lado a lado; no celular, o botão desce para a linha de baixo */
+  .fields { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: flex-end; }
+  .field-nick { flex: 1 1 13rem; }
+  .field-pin { flex: 0 0 8.5rem; }
+  .fields .btn { flex: 0 0 auto; }
+  input[type=password] { width: 100%; min-height: 48px; padding: 10px 14px; border-radius: var(--r-data);
+    background: var(--surface-950); border: 1px solid var(--line-600); color: var(--ink-50);
+    font-family: var(--mono); font-size: 16px; letter-spacing: .3em; }
+  .help { margin-top: 12px; font-size: 14px; color: var(--ink-300); max-width: 44ch; }
+  .notice { margin-bottom: 20px; padding: 14px 18px; border-radius: var(--r-data); background: var(--surface-950);
+    border: 1px solid var(--line-600); color: var(--ink-50); max-width: 62ch; }
+  .notice b { color: var(--lime-400); font-weight: 600; }
 
   /* Jogo */
   .layout { display: grid; gap: 28px; align-items: start; }
@@ -97,14 +109,21 @@
   </div>
 
   <section class="entry" id="entry" aria-labelledby="entry-title" hidden>
-    <h2 id="entry-title">Escolha um apelido</h2>
+    <h2 id="entry-title">Entre com apelido e PIN</h2>
     <p>O apelido define o seu texto cifrado e a sua resposta: ninguém mais recebe a mesma. Não use o seu nome completo.</p>
     <form id="entry-form" autocomplete="off" novalidate>
-      <label for="nick">Apelido (2 a 24 caracteres)</label>
-      <div class="row">
-        <input type="text" id="nick" maxlength="24" placeholder="ex.: ada_lovelace" aria-describedby="entry-msg" autocapitalize="off" spellcheck="false">
-        <button class="btn" type="submit" id="entry-btn">Começar</button>
+      <div class="fields">
+        <div class="field-nick">
+          <label for="nick">Apelido (2 a 24 caracteres)</label>
+          <input type="text" id="nick" maxlength="24" placeholder="ex.: ada_lovelace" aria-describedby="entry-msg" autocapitalize="off" spellcheck="false">
+        </div>
+        <div class="field-pin">
+          <label for="pin">PIN (4 números)</label>
+          <input type="password" id="pin" maxlength="4" inputmode="numeric" pattern="[0-9]{4}" placeholder="••••" autocomplete="off" aria-describedby="pin-help entry-msg">
+        </div>
+        <button class="btn" type="submit" id="entry-btn">Entrar</button>
       </div>
+      <p class="help" id="pin-help">Primeira vez? Invente um PIN e guarde. Amanhã, em qualquer computador, você volta com o mesmo apelido e o mesmo PIN.</p>
       <p class="msg bad" id="entry-msg" role="alert"></p>
     </form>
   </section>
@@ -117,6 +136,7 @@
         <p class="pts" id="me-pts" aria-live="polite"></p>
         <button class="btn quiet" type="button" id="leave">Sair</button>
       </div>
+      <p class="notice" id="pin-note" role="status" hidden>Conta criada. <b>Guarde o seu PIN</b>: amanhã, em qualquer computador, você entra com o apelido e o PIN e continua com os seus pontos.</p>
       <ol class="levels" id="levels"></ol>
     </div>
     <aside class="side" aria-labelledby="side-title">
@@ -330,26 +350,39 @@ async function refreshBoard() {
 
 $('#entry-form').addEventListener('submit', async ev => {
   ev.preventDefault();
-  const nick = $('#nick');
+  const nick = $('#nick'), pin = $('#pin');
   const btn = $('#entry-btn');
-  btn.disabled = true; btn.textContent = 'Entrando…';
-  const { status, data } = await api('/api/login', { nick: nick.value });
-  btn.disabled = false; btn.textContent = 'Começar';
-  if (status !== 200) {
-    nick.setAttribute('aria-invalid', 'true');
-    $('#entry-msg').textContent = data.error || 'Não foi possível entrar. Confira a conexão e tente de novo.';
-    nick.focus();
+  const msg = $('#entry-msg');
+  nick.removeAttribute('aria-invalid'); pin.removeAttribute('aria-invalid');
+  if (!/^\d{4}$/.test(pin.value.trim())) {
+    pin.setAttribute('aria-invalid', 'true');
+    msg.textContent = 'O PIN tem 4 números. Primeira vez? Invente um e guarde.';
+    pin.focus();
     return;
   }
-  nick.removeAttribute('aria-invalid');
-  $('#entry-msg').textContent = '';
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  const { status, data } = await api('/api/login', { nick: nick.value, pin: pin.value.trim() });
+  btn.disabled = false; btn.textContent = 'Entrar';
+  if (status !== 200) {
+    // PIN errado ou apelido travado: o problema está no PIN; nos outros casos, no apelido.
+    const field = (status === 401 || status === 429) ? pin : nick;
+    field.setAttribute('aria-invalid', 'true');
+    msg.textContent = data.error || 'Não foi possível entrar. Confira a conexão e tente de novo.';
+    if (field === pin) pin.value = '';
+    field.focus();
+    return;
+  }
+  msg.textContent = '';
+  pin.value = '';
+  $('#pin-note').hidden = !data.created;
   me = data; show();
 });
 $('#nick').addEventListener('input', () => $('#nick').removeAttribute('aria-invalid'));
+$('#pin').addEventListener('input', () => $('#pin').removeAttribute('aria-invalid'));
 
 $('#leave').addEventListener('click', async () => {
   await api('/api/logout', {});
-  me = null; $('#nick').value = ''; show();
+  me = null; $('#nick').value = ''; $('#pin').value = ''; $('#pin-note').hidden = true; show();
 });
 
 (async () => { const { data } = await api('/api/me'); me = data; show(); })();

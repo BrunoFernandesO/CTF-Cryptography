@@ -46,6 +46,9 @@
   .bulk { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
   .btn.quiet:disabled { background: transparent; color: var(--ink-500); border-color: var(--line-600); border-style: dashed; }
   .bulk .btn { flex: 1 1 10rem; }
+  /* V4.3: liberar apelido de quem esqueceu o PIN */
+  .free { margin-top: 28px; }
+  .free .hint { color: var(--ink-300); font-size: 15px; margin-bottom: 14px; }
   .foot { margin-top: 28px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
   .foot p { color: var(--ink-300); font-size: 14px; max-width: 34ch; }
 </style>
@@ -85,6 +88,19 @@
       <button class="btn quiet" type="button" id="fechar-todos">Fechar todos</button>
     </div>
     <p class="msg" id="msg" aria-live="polite"></p>
+    <section class="panel free" aria-labelledby="free-title">
+      <h2 id="free-title" class="login-title">Liberar apelido</h2>
+      <p class="hint">Aluno esqueceu o PIN? Libere o apelido: ele entra de novo com o mesmo nome, escolhe um PIN novo e continua com todos os pontos.</p>
+      <form id="free-form" autocomplete="off" novalidate>
+        <label for="apelido">Apelido do aluno</label>
+        <div class="row">
+          <input type="text" id="apelido" list="nicks" maxlength="24" autocapitalize="off" spellcheck="false" aria-describedby="free-msg">
+          <button class="btn" type="submit" id="free-btn">Liberar</button>
+        </div>
+        <datalist id="nicks"></datalist>
+        <p class="msg" id="free-msg" aria-live="polite"></p>
+      </form>
+    </section>
     <div class="foot">
       <p>Fim da aula? Feche todos antes de sair.</p>
       <button class="btn quiet" type="button" id="sair">Sair</button>
@@ -152,7 +168,37 @@ function paint() {
   const all = state.levels.every(l => l.open), none = state.levels.every(l => !l.open);
   $('#abrir-todos').disabled = all;
   $('#fechar-todos').disabled = none;
+
+  // Sugestões de apelido para o campo "Liberar" (evita erro de digitação).
+  const dl = $('#nicks');
+  const key = (state.nicks || []).join('\n');
+  if (dl.dataset.key !== key) {
+    dl.textContent = '';
+    (state.nicks || []).forEach(n => { const o = document.createElement('option'); o.value = n; dl.append(o); });
+    dl.dataset.key = key;
+  }
 }
+
+$('#free-form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const input = $('#apelido'), btn = $('#free-btn'), m = $('#free-msg');
+  const apelido = input.value.trim();
+  if (!apelido) { input.setAttribute('aria-invalid', 'true'); m.textContent = 'Digite o apelido do aluno.'; m.className = 'msg bad'; input.focus(); return; }
+  btn.disabled = true; btn.textContent = 'Liberando…';
+  const { status, data } = await api('/api/organizador/liberar', { apelido });
+  btn.disabled = false; btn.textContent = 'Liberar';
+  if (status === 200) {
+    input.value = ''; input.removeAttribute('aria-invalid');
+    m.textContent = data.message; m.className = 'msg ok';
+    state = data; paint();
+    return;
+  }
+  if (status === 401) { state = null; paint(); $('#login-msg').textContent = 'Sua sessão expirou. Entre de novo.'; return; }
+  input.setAttribute('aria-invalid', 'true');
+  m.textContent = status === 0 ? 'Sem conexão. Tente de novo.' : (data.error || 'Não deu certo.');
+  m.className = 'msg bad';
+});
+$('#apelido').addEventListener('input', e => e.target.removeAttribute('aria-invalid'));
 
 async function change(nivel, aberto, btn, label) {
   if (busy) return;

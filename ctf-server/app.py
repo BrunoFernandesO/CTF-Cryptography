@@ -1,9 +1,12 @@
-"""CTF de Criptografia · WorkInTech (Axion) · V4.2.
+"""CTF de Criptografia · WorkInTech (Axion) · V4.3.
 
 Servidor Flask + SQLite. Roda no PythonAnywhere ou em qualquer máquina com Python 3.8+.
 Veja o README.md para instalar, publicar e operar durante o evento.
 
-V4.2 (25/10): rotas /desafio e /colab-desafio, que levam ao caderno desafio (TODOs maiores)."""
+V4.2 (25/10): rotas /desafio e /colab-desafio, que levam ao caderno desafio (TODOs maiores).
+V4.3 (25/10): PIN de 4 dígitos por apelido. Com apelido + PIN o aluno volta à própria conta em qualquer
+computador (no dia 2, depois de clicar em Sair, em aba anônima). Esqueceu o PIN? O organizador libera o
+apelido no /organizador ou no console; pontos e puzzles nunca são apagados por isso."""
 import os
 import re
 import secrets
@@ -21,6 +24,8 @@ BASE = Path(__file__).resolve().parent
 DB_PATH = os.environ.get("CTF_DB", str(BASE / "ctf.db"))
 FREE_TOKEN = "LIVRE"
 NICK_RE = re.compile(r"^[\w .\-]{2,24}$", re.UNICODE)
+PIN_RE = re.compile(r"^[0-9]{4}$")
+MAX_PIN_FAILS, PIN_LOCK_S = 5, 300  # 5 PINs errados seguidos travam o apelido por 5 min (10.000 PINs: chute inviável)
 MAX_ATTEMPTS = 500  # tentativas para achar uma resposta ainda não usada por ninguém
 
 
@@ -79,9 +84,20 @@ CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 """
 
 
+PLAYER_COLUMNS_V43 = {  # colunas novas da V4.3; um banco antigo ganha as colunas sem perder nada
+    "pin_hash": "TEXT",
+    "pin_fails": "INTEGER NOT NULL DEFAULT 0",
+    "pin_lock": "REAL NOT NULL DEFAULT 0",
+}
+
+
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     conn.executescript(SCHEMA)
+    have = {r[1] for r in conn.execute("PRAGMA table_info(players)")}
+    for col, decl in PLAYER_COLUMNS_V43.items():
+        if col not in have:
+            conn.execute(f"ALTER TABLE players ADD COLUMN {col} {decl}")
     conn.commit()
     conn.close()
 
@@ -255,29 +271,73 @@ def api_me():
 
 @app.post("/api/login")
 def api_login():
+    """Entrar ou voltar à conta (V4.3).
+    - Apelido novo: cria a conta com o PIN escolhido.
+    - Mesmo navegador (cookie válido): entra direto, sem PIN.
+    - Outro computador, aba anônima ou depois de Sair: apelido + PIN corretos devolvem a mesma conta, com os pontos.
+    - Apelido liberado pelo organizador: quem entrar com ele escolhe um PIN novo e fica com os pontos."""
     data = request.get_json(silent=True) or {}
     display = str(data.get("nick", "")).strip()
+    pin = str(data.get("pin", "")).strip()
     if not NICK_RE.match(display):
         return jsonify({"error": "Use de 2 a 24 caracteres: letras, números, espaço, _ , . ou -."}), 400
     nick_key = display.lower()
     conn = db()
+    now = time.time()
+    created = False
     row = conn.execute("SELECT * FROM players WHERE nick_key=?", (nick_key,)).fetchone()
     if row is None:
+        if not PIN_RE.match(pin):
+            return jsonify({"error": "Escolha um PIN de 4 dígitos (só números). Você vai usá-lo para voltar amanhã."}), 400
         token = secrets.token_hex(16)
-        conn.execute("INSERT INTO players VALUES (?,?,?,?)", (nick_key, display, token, time.time()))
-        conn.commit()
+        try:
+            conn.execute("INSERT INTO players (nick_key, display, token, created, pin_hash) VALUES (?,?,?,?,?)",
+                         (nick_key, display, token, now, generate_password_hash(pin)))
+            conn.commit()
+        except sqlite3.IntegrityError:  # dois cliques ao mesmo tempo com o mesmo apelido
+            conn.rollback()
+            return jsonify({"error": "Esse apelido acabou de ser criado. Se é seu, entre de novo com o PIN."}), 409
+        created = True
     elif session.get("nick_key") == nick_key and session.get("token") == row["token"]:
-        token = row["token"]
-    elif row["token"] == FREE_TOKEN:  # liberado pelo organizador: quem entrar primeiro assume
+        token = row["token"]  # mesmo navegador de antes
+        if row["pin_hash"] is None and PIN_RE.match(pin):  # conta de um banco antigo, sem PIN: grava o PIN agora
+            conn.execute("UPDATE players SET pin_hash=? WHERE nick_key=?", (generate_password_hash(pin), nick_key))
+            conn.commit()
+    elif row["token"] == FREE_TOKEN:  # liberado pelo organizador: quem entrar primeiro assume e escolhe um PIN novo
+        if not PIN_RE.match(pin):
+            return jsonify({"error": "Este apelido foi liberado pelo organizador. Escolha um PIN novo de 4 dígitos para continuar."}), 400
         token = secrets.token_hex(16)
-        conn.execute("UPDATE players SET token=? WHERE nick_key=?", (token, nick_key))
+        conn.execute("UPDATE players SET token=?, pin_hash=?, pin_fails=0, pin_lock=0 WHERE nick_key=?",
+                     (token, generate_password_hash(pin), nick_key))
         conn.commit()
     else:
-        return jsonify({"error": "Esse apelido já está em uso. Escolha outro."}), 409
+        if row["pin_hash"] is None:  # conta de um banco antigo, criada sem PIN
+            return jsonify({"error": "Esse apelido já está em uso. Se é seu, peça ao organizador para liberá-lo."}), 409
+        if row["pin_lock"] > now:
+            return jsonify({"error": f"Muitas tentativas com este apelido. Espere {int(row['pin_lock'] - now) + 1} s "
+                                     "ou peça ao organizador para liberá-lo."}), 429
+        if not PIN_RE.match(pin):
+            return jsonify({"error": "Esse apelido já existe. Se é seu, digite o PIN de 4 dígitos que você escolheu. "
+                                     "Se não é, escolha outro apelido."}), 401
+        if not check_password_hash(row["pin_hash"], pin):
+            fails = row["pin_fails"] + 1
+            if fails >= MAX_PIN_FAILS:
+                conn.execute("UPDATE players SET pin_fails=0, pin_lock=? WHERE nick_key=?", (now + PIN_LOCK_S, nick_key))
+                conn.commit()
+                return jsonify({"error": "PIN incorreto. O apelido ficou travado por 5 minutos. "
+                                         "Esqueceu o PIN? Peça ao organizador para liberar o seu apelido."}), 429
+            conn.execute("UPDATE players SET pin_fails=? WHERE nick_key=?", (fails, nick_key))
+            conn.commit()
+            left = MAX_PIN_FAILS - fails
+            return jsonify({"error": f"PIN incorreto para este apelido ({left} tentativa{'s' if left > 1 else ''} antes de travar). "
+                                     "Esqueceu o PIN? Peça ao organizador para liberar o seu apelido."}), 401
+        conn.execute("UPDATE players SET pin_fails=0, pin_lock=0 WHERE nick_key=?", (nick_key,))
+        conn.commit()
+        token = row["token"]  # o mesmo token: o outro computador continua logado, e os pontos são os mesmos
     session.permanent = True
     session["nick_key"], session["token"] = nick_key, token
     player = conn.execute("SELECT * FROM players WHERE nick_key=?", (nick_key,)).fetchone()
-    return jsonify({"logged_in": True, **player_payload(player)})
+    return jsonify({"logged_in": True, "created": created, **player_payload(player)})
 
 
 @app.post("/api/logout")
@@ -386,8 +446,21 @@ def admin_state():
         solved = conn.execute("SELECT COUNT(*) FROM solves WHERE level=?", (l["id"],)).fetchone()[0]
         levels.append({"id": l["id"], "name": l["name"], "points": l["points"], "open": l["id"] in opened,
                        "solved": solved})
-    players = conn.execute("SELECT COUNT(*) FROM players").fetchone()[0]
-    return {"levels": levels, "players": players, "open": sorted(opened)}
+    nicks = [r[0] for r in conn.execute("SELECT display FROM players ORDER BY display COLLATE NOCASE")]
+    return {"levels": levels, "players": len(nicks), "open": sorted(opened), "nicks": nicks}
+
+
+def free_player(conn, nick: str):
+    """Libera um apelido (V4.3): apaga só o PIN e a sessão. Pontos, acertos e puzzles continuam.
+    Devolve o nome exibido do jogador ou None se o apelido não existe."""
+    nick_key = nick.strip().lower()
+    row = conn.execute("SELECT display FROM players WHERE nick_key=?", (nick_key,)).fetchone()
+    if not row:
+        return None
+    conn.execute("UPDATE players SET token=?, pin_hash=NULL, pin_fails=0, pin_lock=0 WHERE nick_key=?",
+                 (FREE_TOKEN, nick_key))
+    conn.commit()
+    return row[0]
 
 
 @app.get("/organizador")
@@ -447,22 +520,39 @@ def organizer_levels():
     return jsonify(admin_state())
 
 
+@app.post("/api/organizador/liberar")
+def organizer_free():
+    """Aluno esqueceu o PIN (V4.3): libera o apelido. O próximo login com ele escolhe um PIN novo e fica com os pontos."""
+    denied = admin_required()
+    if denied:
+        return denied
+    nick = str((request.get_json(silent=True) or {}).get("apelido", ""))[:24]
+    if not nick.strip():
+        return jsonify({"error": "Digite o apelido do aluno."}), 400
+    display = free_player(db(), nick)
+    if display is None:
+        return jsonify({"error": f"Apelido \"{nick.strip()}\" não encontrado. Confira a grafia."}), 404
+    return jsonify({**admin_state(), "message": f"{display} liberado. Peça para entrar com o mesmo apelido e escolher "
+                                                "um PIN novo; os pontos continuam."})
+
+
 # ---------- comandos do organizador ----------
 @app.cli.command("liberar")
 @click.argument("nick")
 def liberar(nick):
-    """Libera um apelido (o aluno perdeu o cookie e não consegue voltar). Mantém pontos e puzzles."""
+    """Libera um apelido (o aluno esqueceu o PIN). Apaga só o PIN e a sessão; mantém pontos e puzzles."""
     conn = sqlite3.connect(DB_PATH)
-    n = conn.execute("UPDATE players SET token=? WHERE nick_key=?", (FREE_TOKEN, nick.strip().lower())).rowcount
-    conn.commit()
+    display = free_player(conn, nick)
     conn.close()
-    click.echo("Apelido liberado: o próximo login com esse nome assume a conta." if n else "Apelido não encontrado.")
+    click.echo(f"{display} liberado: o próximo login com esse apelido escolhe um PIN novo e fica com os pontos."
+               if display else "Apelido não encontrado.")
 
 
 @app.cli.command("zerar")
-@click.confirmation_option(prompt="Apagar todos os jogadores, pontos, tentativas e puzzles atribuídos?")
+@click.confirmation_option(prompt="Apagar TODOS os jogadores e pontos? Use só antes de uma turma nova, "
+                                  "NUNCA entre o dia 1 e o dia 2")
 def zerar():
-    """Apaga tudo (use antes de cada turma)."""
+    """Apaga tudo (use só antes de uma turma nova; nunca entre o dia 1 e o dia 2)."""
     conn = sqlite3.connect(DB_PATH)
     conn.executescript("DELETE FROM attempts; DELETE FROM solves; DELETE FROM assignments; DELETE FROM players;")
     conn.commit()

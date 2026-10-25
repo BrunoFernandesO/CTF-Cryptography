@@ -1,8 +1,15 @@
-# CTF de Criptografia · WorkInTech (Axion) · V4.2
+# CTF de Criptografia · WorkInTech (Axion) · V4.3
 
 Servidor do desafio final da oficina **Criptografia na Prática: Matemática e Python do Zero ao RSA**, ministrada por Bruno Fernandes Ortega no WorkInTech 2026 (Axion, UniCesumar). Cada aluno escolhe um apelido, recebe três puzzles próprios (César, Vigenère e RSA pequeno), quebra cada um com o código que escreveu na oficina e envia a flag. O placar do telão atualiza sozinho.
 
-**Novidade da V4.2 (25/10):** o endereço curto `/desafio` (ou `/colab-desafio`) leva ao **caderno desafio**, com TODOs maiores que os do slide. O `/colab` continua levando ao caderno de sempre (o fácil). O resto do servidor é idêntico à V4.
+**Novidades da V4.3 (25/10):**
+
+- **Apelido + PIN.** Ao criar o apelido, o aluno escolhe um PIN de 4 números. No dia 2, em outro computador, em aba anônima ou depois de clicar em Sair, ele volta à mesma conta com apelido + PIN, com os pontos e os mesmos puzzles. No mesmo navegador entra direto, sem PIN. Cinco PINs errados seguidos travam aquele apelido por 5 minutos (quem já está logado continua).
+- **Esqueceu o PIN?** O organizador libera o apelido no painel `/organizador` (campo "Liberar apelido", com sugestões dos apelidos existentes) ou no console (`flask --app app liberar APELIDO`). Liberar apaga só o PIN e a sessão: o aluno entra com o mesmo apelido, escolhe um PIN novo e continua com **todos os pontos e os mesmos puzzles**.
+- **Nada apaga pontos entre os dias.** Reiniciar o servidor, fechar níveis ou liberar apelidos não mexe em acertos. Só o `zerar` apaga, e ele avisa: use só antes de uma turma nova, nunca entre o dia 1 e o dia 2.
+- Um banco da V3/V4 é atualizado sozinho (colunas novas em `players`). Contas antigas, criadas sem PIN, precisam ser liberadas uma vez para escolher um PIN.
+
+V4.2: o endereço curto `/desafio` (ou `/colab-desafio`) leva ao **caderno desafio**, com TODOs maiores que os do slide. O `/colab` continua levando ao caderno de sempre (o fácil).
 
 ## Como funciona
 
@@ -60,8 +67,8 @@ Ao atualizar uma versão já publicada, substitua só os arquivos do código e *
 ## Comandos do organizador
 
 ```bash
-flask --app app zerar               # apaga jogadores, pontos e puzzles (antes de cada turma)
-flask --app app liberar APELIDO     # aluno perdeu o login: o próximo acesso com esse nome assume a conta
+flask --app app zerar               # apaga jogadores, pontos e puzzles (só antes de uma turma nova; NUNCA entre os dias)
+flask --app app liberar APELIDO     # aluno esqueceu o PIN: o próximo login com esse nome escolhe PIN novo e fica com os pontos
 flask --app app respostas APELIDO   # mostra a resposta de um aluno, para ajudar quem travou
 flask --app app senha               # cria ou troca a senha do painel /organizador (mínimo 8 caracteres)
 flask --app app abrir 1             # abre níveis: abrir 2 3   |   abrir todos
@@ -69,7 +76,7 @@ flask --app app fechar todos        # fecha níveis
 flask --app app status              # mostra o que está aberto
 ```
 
-O painel `/organizador` faz o mesmo que `abrir` e `fechar`, pelo celular. Cinco senhas erradas bloqueiam o endereço por 5 minutos. O `zerar` não mexe na senha nem nos níveis abertos.
+O painel `/organizador` faz o mesmo que `abrir`, `fechar` e `liberar`, pelo celular. Cinco senhas erradas bloqueiam o endereço por 5 minutos. O `zerar` não mexe na senha nem nos níveis abertos.
 
 ## Estrutura
 
