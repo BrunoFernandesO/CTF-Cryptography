@@ -1,7 +1,9 @@
-"""CTF de Criptografia · WorkInTech (Axion) · V4.
+"""CTF de Criptografia · WorkInTech (Axion) · V4.2.
 
 Servidor Flask + SQLite. Roda no PythonAnywhere ou em qualquer máquina com Python 3.8+.
-Veja o README.md para instalar, publicar e operar durante o evento."""
+Veja o README.md para instalar, publicar e operar durante o evento.
+
+V4.2 (25/10): rotas /desafio e /colab-desafio, que levam ao caderno desafio (TODOs maiores)."""
 import os
 import re
 import secrets
@@ -222,16 +224,25 @@ def scoreboard_page():
     return render_template("placar.html")
 
 
-# Endereço curto para os computadores do laboratório: digitar /colab é mais fácil
-# do que a URL do Google Drive. Pode ser trocado sem mexer no código (variável COLAB_URL).
+# Endereços curtos para os computadores do laboratório: digitar /colab ou /desafio é mais fácil
+# do que a URL do Google Drive. Podem ser trocados sem mexer no código (variáveis COLAB_URL e DESAFIO_URL).
 COLAB_URL = os.environ.get(
     "COLAB_URL", "https://colab.research.google.com/drive/1N70OYpaif6YbzcAS442WMSWpG9n7g9t7")
+# V4.2: caderno desafio, com TODOs maiores que os do slide, para quem quiser mais dificuldade.
+DESAFIO_URL = os.environ.get(
+    "DESAFIO_URL", "https://colab.research.google.com/drive/1AW7qfgcnRM-MK0WGk3RmyI2qsbCfHQ1f")
 
 
 @app.get("/colab", strict_slashes=False)
 @app.get("/caderno", strict_slashes=False)
 def colab():
     return redirect(COLAB_URL, code=302)
+
+
+@app.get("/desafio", strict_slashes=False)
+@app.get("/colab-desafio", strict_slashes=False)
+def colab_desafio():
+    return redirect(DESAFIO_URL, code=302)
 
 
 @app.get("/api/me")

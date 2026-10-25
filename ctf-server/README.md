@@ -1,6 +1,8 @@
-# CTF de Criptografia · WorkInTech (Axion) · V4
+# CTF de Criptografia · WorkInTech (Axion) · V4.2
 
 Servidor do desafio final da oficina **Criptografia na Prática: Matemática e Python do Zero ao RSA**, ministrada por Bruno Fernandes Ortega no WorkInTech 2026 (Axion, UniCesumar). Cada aluno escolhe um apelido, recebe três puzzles próprios (César, Vigenère e RSA pequeno), quebra cada um com o código que escreveu na oficina e envia a flag. O placar do telão atualiza sozinho.
+
+**Novidade da V4.2 (25/10):** o endereço curto `/desafio` (ou `/colab-desafio`) leva ao **caderno desafio**, com TODOs maiores que os do slide. O `/colab` continua levando ao caderno de sempre (o fácil). O resto do servidor é idêntico à V4.
 
 ## Como funciona
 
@@ -10,11 +12,12 @@ Servidor do desafio final da oficina **Criptografia na Prática: Matemática e P
                            ├─ atribui a cada aluno uma resposta que ninguém mais tem (UNIQUE no banco)
                            └─ confere as flags só no servidor
  Telão ("/placar") ◄── /api/placar a cada 3 s: ranking, primeiro a resolver, últimos acertos
- "/colab" e "/caderno" ──► redirecionam para o caderno do aluno no Google Colab
+ "/colab" e "/caderno" ──► redirecionam para o caderno do aluno (fácil) no Google Colab
+ "/desafio" e "/colab-desafio" ──► redirecionam para o caderno desafio (V4.2)
  "/organizador" ──► painel com senha para abrir e fechar cada nível durante a aula
 ```
 
-O endereço curto `/colab` existe porque os alunos programam nos computadores do laboratório: digitar `brunofernandeso.pythonanywhere.com/colab` é viável, a URL do Google Drive não. O destino fica na constante `COLAB_URL` do `app.py` (ou na variável de ambiente de mesmo nome).
+Os endereços curtos existem porque os alunos programam nos computadores do laboratório: digitar `brunofernandeso.pythonanywhere.com/colab` ou `/desafio` é viável, a URL do Google Drive não. Os destinos ficam nas constantes `COLAB_URL` e `DESAFIO_URL` do `app.py` (ou nas variáveis de ambiente de mesmo nome).
 
 | Nível | Cifra | O aluno precisa | Respostas diferentes |
 | --- | --- | --- | --- |
@@ -72,7 +75,7 @@ O painel `/organizador` faz o mesmo que `abrir` e `fechar`, pelo celular. Cinco 
 
 ```text
 ctf-server/
-├── app.py              rotas (inclusive /colab), banco, atribuição de respostas, comandos
+├── app.py              rotas (inclusive /colab e /desafio), banco, atribuição de respostas, comandos
 ├── puzzles.py          listas de palavras e chaves, geração dos puzzles, comparação de flags
 ├── templates/          index.html (alunos), placar.html (telão) e organizador.html (painel)
 ├── static/             ctf.css (tokens da identidade Axion), trilha.js, logos e fundo
