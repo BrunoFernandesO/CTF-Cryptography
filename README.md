@@ -115,5 +115,5 @@ Everything was built between 14 and 26 October 2026. The repository was created 
 ## License
 
 - Code (`ctf-server/`, `reference/`, `tests/`): MIT License, see [LICENSE](LICENSE).
-- Teaching materials (`slides/`, `notebooks/`, `docs/`, the README files): Creative Commons Attribution 4.0 International, see [LICENSE-CC-BY-4.0.md](LICENSE-CC-BY-4.0.md).
+- Teaching materials (`slides/`, `notebooks/`, `docs/`, the README files): Creative Commons Attribution 4.0 International, see [LICENSE-CC-BY-4.0.txt](LICENSE-CC-BY-4.0.txt).
 - Not covered by either license: the Axion and WorkInTech logos and the background image (`ctf-server/static/axion-logo.svg`, `wit-mark.png`, `fundo.jpg`, and the same images in the slides) belong to Axion and are published with its permission. Historical photographs and third-party diagrams in the slides keep their own terms. Fonts embedded in the PowerPoint file keep their own licenses, listed in the file's properties.
