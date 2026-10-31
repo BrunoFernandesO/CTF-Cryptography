@@ -3,3 +3,5 @@ secret.key
 __pycache__/
 *.pyc
 .venv/
+tests/legacy/out/
+.pytest_cache/

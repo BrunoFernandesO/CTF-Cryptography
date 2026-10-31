@@ -1,5 +1,8 @@
 import sys
-sys.path.insert(0, "../ctf-server")
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "ctf-server"))
+OUT = Path(__file__).resolve().parent / "out"
+OUT.mkdir(exist_ok=True)
 import puzzles
 from playwright.sync_api import sync_playwright
 flag = puzzles.make_puzzle(b"ui-secret", "bruno", 1)["flag"]
@@ -18,9 +21,9 @@ with sync_playwright() as p:
     assert "100 pts" in pg.inner_text("#chip-points")
     pg.wait_for_timeout(500)
     assert "Bruno" in pg.inner_text("#board")
-    pg.screenshot(path="out/ui.png", full_page=True)
+    pg.screenshot(path=str(OUT / "ui.png"), full_page=True)
     pg.goto("http://127.0.0.1:5055/placar"); pg.wait_for_timeout(800)
     assert "Bruno" in pg.inner_text("#board")
-    pg.screenshot(path="out/placar.png")
+    pg.screenshot(path=str(OUT / "placar.png"))
     b.close()
 print("UI ok; erros JS:", errs)

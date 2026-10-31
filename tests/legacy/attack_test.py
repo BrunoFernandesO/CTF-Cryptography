@@ -1,5 +1,6 @@
 import sys, math
-sys.path.insert(0, "../ctf-server")
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "ctf-server"))
 from collections import Counter
 from puzzles import make_puzzle, check_flag, ALPHA
 

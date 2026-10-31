@@ -1,6 +1,7 @@
 import json, re
+from pathlib import Path
 from playwright.sync_api import sync_playwright
-D = "deck/project/"
+D = str(Path(__file__).resolve().parents[2] / "slides" / "prototype-html") + "/"
 order = json.load(open(D + "deck.json"))["order"]
 with sync_playwright() as p:
     b = p.chromium.launch(executable_path="/opt/pw-browsers/chromium")
